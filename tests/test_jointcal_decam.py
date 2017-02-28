@@ -62,20 +62,20 @@ class JointcalTestDECAM(jointcalTestBase.JointcalTestBase, lsst.utils.tests.Test
         relative_error = 32e-3*u.arcsecond
         pa1 = 0.0383
         # NOTE: decam fits are currently not converging; the chi2 jumps around, so skip that test.
-        metrics = {'collectedAstrometryRefStars': 8194,
-                   'collectedPhotometryRefStars': 8194,
-                   'selectedAstrometryRefStars': 8194,
-                   'selectedPhotometryRefStars': 8194,
-                   'associatedAstrometryFittedStars': 8241,
-                   'associatedPhotometryFittedStars': 8241,
-                   'selectedAstrometryFittedStars': 2261,
-                   'selectedPhotometryFittedStars': 2261,
-                   'selectedAstrometryCcdImageList': 17,
-                   'selectedPhotometryCcdImageList': 17,
-                   'astrometryFinalChi2': None,
-                   'astrometryFinalNdof': 4306,
-                   'photometryFinalChi2': None,
-                   'photometryFinalNdof': 1626,
+        metrics = {'collected_astrometry_refStars': 8194,
+                   'collected_photometry_refStars': 8194,
+                   'selected_astrometry_refStars': 8194,
+                   'selected_photometry_refStars': 8194,
+                   'associated_astrometry_fittedStars': 8241,
+                   'associated_photometry_fittedStars': 8241,
+                   'selected_astrometry_fittedStars': 2261,
+                   'selected_photometry_fittedStars': 2261,
+                   'selected_astrometry_ccdImages': 17,
+                   'selected_photometry_ccdImages': 17,
+                   'astrometry_chisq': None,
+                   'astrometry_ndof': 4306,
+                   'photometry_chisq': None,
+                   'photometry_ndof': 1626,
                    }
 
         self._testJointcalTask(2, relative_error, absolute_error, pa1, metrics=metrics)

@@ -69,20 +69,20 @@ class JointcalTestLSSTSim(jointcalTestBase.JointcalTestBase, lsst.utils.tests.Te
         # this in the future!
         dist_rms_relative = 9.7e-3*u.arcsecond
         pa1 = 2.64e-3
-        metrics = {'collectedAstrometryRefStars': 1686,
-                   'collectedPhotometryRefStars': 1686,
-                   'selectedAstrometryRefStars': 1686,
-                   'selectedPhotometryRefStars': 1686,
-                   'associatedAstrometryFittedStars': 1365,
-                   'associatedPhotometryFittedStars': 1365,
-                   'selectedAstrometryFittedStars': 789,
-                   'selectedPhotometryFittedStars': 789,
-                   'selectedAstrometryCcdImageList': 2,
-                   'selectedPhotometryCcdImageList': 2,
-                   'astrometryFinalChi2': 742.4992,
-                   'astrometryFinalNdof': 1698,
-                   'photometryFinalChi2': 2310.628,
-                   'photometryFinalNdof': 728
+        metrics = {'collected_astrometry_refStars': 1686,
+                   'collected_photometry_refStars': 1686,
+                   'selected_astrometry_refStars': 1686,
+                   'selected_photometry_refStars': 1686,
+                   'associated_astrometry_fittedStars': 1365,
+                   'associated_photometry_fittedStars': 1365,
+                   'selected_astrometry_fittedStars': 789,
+                   'selected_photometry_fittedStars': 789,
+                   'selected_astrometry_ccdImages': 2,
+                   'selected_photometry_ccdImages': 2,
+                   'astrometry_chisq': 742.4992,
+                   'astrometry_ndof': 1698,
+                   'photometry_chisq': 2310.628,
+                   'photometry_ndof': 728
                    }
         self._testJointcalTask(2, dist_rms_relative, dist_rms_absolute, pa1, metrics=metrics)
 
@@ -90,20 +90,20 @@ class JointcalTestLSSTSim(jointcalTestBase.JointcalTestBase, lsst.utils.tests.Te
     def testJointcalTask_10_visits(self):
         dist_rms_relative = 7.9e-3*u.arcsecond
         pa1 = 2.64e-3
-        metrics = {'collectedAstrometryRefStars': 1686,
-                   'collectedPhotometryRefStars': 1686,
-                   'selectedAstrometryRefStars': 1686,
-                   'selectedPhotometryRefStars': 1686,
-                   'associatedAstrometryFittedStars': 1823,
-                   'associatedPhotometryFittedStars': 1823,
-                   'selectedAstrometryFittedStars': 1506,
-                   'selectedPhotometryFittedStars': 1506,
-                   'selectedAstrometryCcdImageList': 10,
-                   'selectedPhotometryCcdImageList': 10,
-                   'astrometryFinalChi2': 7262.2075,
-                   'astrometryFinalNdof': 18260,
-                   'photometryFinalChi2': 35321.947,
-                   'photometryFinalNdof': 9141
+        metrics = {'collected_astrometry_refStars': 1686,
+                   'collected_photometry_refStars': 1686,
+                   'selected_astrometry_refStars': 1686,
+                   'selected_photometry_refStars': 1686,
+                   'associated_astrometry_fittedStars': 1823,
+                   'associated_photometry_fittedStars': 1823,
+                   'selected_astrometry_fittedStars': 1506,
+                   'selected_photometry_fittedStars': 1506,
+                   'selected_astrometry_ccdImages': 10,
+                   'selected_photometry_ccdImages': 10,
+                   'astrometry_chisq': 7262.2075,
+                   'astrometry_ndof': 18260,
+                   'photometry_chisq': 35321.947,
+                   'photometry_ndof': 9141
                    }
         self._testJointcalTask(10, dist_rms_relative, dist_rms_absolute, pa1, metrics=metrics)
 
@@ -111,13 +111,13 @@ class JointcalTestLSSTSim(jointcalTestBase.JointcalTestBase, lsst.utils.tests.Te
     def testJointcalTask_2_visits_no_astrometry(self):
         """Test turning off fitting astrometry."""
         pa1 = 2.64e-3
-        metrics = {'collectedPhotometryRefStars': 1686,
-                   'selectedPhotometryRefStars': 1686,
-                   'associatedPhotometryFittedStars': 1365,
-                   'selectedPhotometryFittedStars': 789,
-                   'selectedPhotometryCcdImageList': 2,
-                   'photometryFinalChi2': 2310.6280,
-                   'photometryFinalNdof': 728
+        metrics = {'collected_photometry_refStars': 1686,
+                   'selected_photometry_refStars': 1686,
+                   'associated_photometry_fittedStars': 1365,
+                   'selected_photometry_fittedStars': 789,
+                   'selected_photometry_ccdImages': 2,
+                   'photometry_chisq': 2310.6280,
+                   'photometry_ndof': 728
                    }
 
         self.config = lsst.jointcal.jointcal.JointcalConfig()
@@ -145,13 +145,13 @@ class JointcalTestLSSTSim(jointcalTestBase.JointcalTestBase, lsst.utils.tests.Te
     def testJointcalTask_2_visits_no_photometry(self):
         """Test turning off fitting photometry."""
         dist_rms_relative = 9.7e-3*u.arcsecond
-        metrics = {'collectedAstrometryRefStars': 1686,
-                   'selectedAstrometryRefStars': 1686,
-                   'associatedAstrometryFittedStars': 1365,
-                   'selectedAstrometryFittedStars': 789,
-                   'selectedAstrometryCcdImageList': 2,
-                   'astrometryFinalChi2': 742.4992,
-                   'astrometryFinalNdof': 1698
+        metrics = {'collected_astrometry_refStars': 1686,
+                   'selected_astrometry_refStars': 1686,
+                   'associated_astrometry_fittedStars': 1365,
+                   'selected_astrometry_fittedStars': 789,
+                   'selected_astrometry_ccdImages': 2,
+                   'astrometry_chisq': 742.4992,
+                   'astrometry_ndof': 1698
                    }
 
         self.config = lsst.jointcal.jointcal.JointcalConfig()

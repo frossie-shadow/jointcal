@@ -56,20 +56,20 @@ class JointcalTestCFHT(jointcalTestBase.JointcalTestBase, lsst.utils.tests.TestC
         # this in the future!
         relative_error = 25e-3*u.arcsecond
         pa1 = 0.019
-        metrics = {'collectedAstrometryRefStars': 825,
-                   'collectedPhotometryRefStars': 825,
-                   'selectedAstrometryRefStars': 825,
-                   'selectedPhotometryRefStars': 825,
-                   'associatedAstrometryFittedStars': 2269,
-                   'associatedPhotometryFittedStars': 2269,
-                   'selectedAstrometryFittedStars': 1239,
-                   'selectedPhotometryFittedStars': 1239,
-                   'selectedAstrometryCcdImageList': 12,
-                   'selectedPhotometryCcdImageList': 12,
-                   'astrometryFinalChi2': 1150.62,
-                   'astrometryFinalNdof': 2550,
-                   'photometryFinalChi2': 13363.6,
-                   'photometryFinalNdof': 1089
+        metrics = {'collected_astrometry_refStars': 825,
+                   'collected_photometry_refStars': 825,
+                   'selected_astrometry_refStars': 825,
+                   'selected_photometry_refStars': 825,
+                   'associated_astrometry_fittedStars': 2269,
+                   'associated_photometry_fittedStars': 2269,
+                   'selected_astrometry_fittedStars': 1239,
+                   'selected_photometry_fittedStars': 1239,
+                   'selected_astrometry_ccdImages': 12,
+                   'selected_photometry_ccdImages': 12,
+                   'astrometry_chisq': 1150.62,
+                   'astrometry_ndof': 2550,
+                   'photometry_chisq': 13363.6,
+                   'photometry_ndof': 1089
                    }
 
         self._testJointcalTask(2, relative_error, absolute_error, pa1, metrics=metrics)
