@@ -6,6 +6,8 @@
 #include <sstream>
 #include <memory>
 
+#include "lsst/afw/geom/Point.h"
+#include "lsst/afw/math/ChebyshevBoundedField.h"
 #include "lsst/jointcal/Point.h"
 
 namespace lsst {
@@ -46,7 +48,7 @@ public:
     virtual int getNpar() const { return 0; }
 
     /// Offset the parameters by some amount during fitting.
-    virtual void offsetParams(double const *delta) = 0;
+    virtual void offsetParams(Eigen::VectorXd const &delta) = 0;
 
     /// return a copy (allocated by new) of the transformation.
     virtual std::unique_ptr<PhotometryTransfo> clone() const = 0;
@@ -73,7 +75,7 @@ public:
 
     int getNpar() const override { return 1; }
 
-    void offsetParams(const double *delta) override { _value -= *delta; };
+    void offsetParams(Eigen::VectorXd const &delta) override { _value -= delta[0]; };
 
     std::unique_ptr<PhotometryTransfo> clone() const override {
         return std::unique_ptr<PhotometryTransfo>(new PhotometryTransfoSpatiallyInvariant(_value));
@@ -93,6 +95,26 @@ protected:
 private:
     /// value of this transform at all locations.
     double _value;
+};
+
+class PhotometryTransfoChebyshev : public PhotometryTransfo, public afw::math::ChebyshevBoundedField {
+public:
+    PhotometryTransfoChebyshev(size_t order);
+
+    double apply(double x, double y, double instFlux) const override {
+        return instFlux * this->evaluate(afw::geom::Point2D(x, y));
+    }
+
+    void dump(std::ostream &stream = std::cout) const override { this->toString(); }
+
+    int getNpar() const override { return _coefficients.getSize<0>() * _coefficients.getSize<1>(); }
+
+    void offsetParams(Eigen::VectorXd const &delta) override;
+
+    std::unique_ptr<PhotometryTransfo> clone() const override {
+        return nullptr;
+        // return std::unique_ptr<PhotometryTransfo>(new PhotometryTransfoChebyshev());
+    }
 };
 
 }  // namespace jointcal
