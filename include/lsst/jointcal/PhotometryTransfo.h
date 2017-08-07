@@ -47,7 +47,13 @@ public:
     /// Return the number of parameters (used to compute chisq)
     virtual int getNpar() const { return 0; }
 
-    /// Offset the parameters by some amount during fitting.
+    /**
+     * Offset the parameters by some (negative) amount during fitting.
+     *
+     * Equivalent to `flatten(parameters) -= delta`
+     *
+     * Ordering of delta is the same as the ordering of the derivatives returned from `computeDerivatives`.
+     */
     virtual void offsetParams(Eigen::VectorXd const &delta) = 0;
 
     /// return a copy (allocated by new) of the transformation.

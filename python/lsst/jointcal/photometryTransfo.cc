@@ -34,6 +34,10 @@ namespace {
 void declarePhotometryTransfo(py::module &mod) {
     py::class_<PhotometryTransfo, std::shared_ptr<PhotometryTransfo>> cls(mod, "PhotometryTransfo");
 
+    cls.def("apply", (double (PhotometryTransfo::*)(double, double, double) const) & PhotometryTransfo::apply,
+            "x"_a, "y"_a, "instFlux"_a);
+    cls.def("offsetParams", &PhotometryTransfo::offsetParams);
+
     cls.def("__str__", &PhotometryTransfo::__str__);
 }
 

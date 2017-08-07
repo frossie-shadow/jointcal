@@ -15,8 +15,7 @@ void PhotometryTransfo::computeDerivative(const Point &where, PhotometryTransfoS
     derivative.setValue((1 - flux1) / step);
 }
 
-// = PhotometryTransfoChebyshev
-PhotometryTransfoChebyshev::PhotometryTransfoChebyshev(dize_t order) {
+PhotometryTransfoChebyshev::PhotometryTransfoChebyshev(size_t order) {
     coeffs = ndarray::allocate(makeVector(2, order));
     afw::math::ChebyshevBoundedField(afw::geom::Box2I(), coeffs);
 }
