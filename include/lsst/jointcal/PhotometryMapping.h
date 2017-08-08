@@ -48,7 +48,7 @@ public:
     //! The same as above but without the parameter derivatives (used to evaluate chi^2)
     void transformPosAndErrors(Point const &where, double &out) const;
 
-    void offsetParams(const double *delta) { transfo->offsetParams(delta); }
+    void offsetParams(Eigen::VectorXd const &delta) { transfo->offsetParams(delta); }
 
     /// Get the index of this mapping in the grand fit.
     unsigned getIndex() { return index; }

@@ -35,7 +35,7 @@ unsigned SimplePhotometryModel::assignIndices(std::string const &whatToFit, unsi
 void SimplePhotometryModel::offsetParams(Eigen::VectorXd const &delta) {
     for (auto &i : _myMap) {
         auto mapping = i.second.get();
-        mapping->offsetParams(&delta[mapping->getIndex()]);
+        mapping->offsetParams(delta.segment(mapping->getIndex(), mapping->getNpar()));
     }
 }
 

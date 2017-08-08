@@ -6,8 +6,10 @@
 #include <sstream>
 #include <memory>
 
+#include "ndarray.h"
+
+#include "lsst/afw/geom/AffineTransform.h"
 #include "lsst/afw/geom/Point.h"
-#include "lsst/afw/math/ChebyshevBoundedField.h"
 #include "lsst/jointcal/Point.h"
 
 namespace lsst {
@@ -103,15 +105,15 @@ private:
     double _value;
 };
 
-class PhotometryTransfoChebyshev : public PhotometryTransfo, public afw::math::ChebyshevBoundedField {
+class PhotometryTransfoChebyshev : public PhotometryTransfo {
 public:
     PhotometryTransfoChebyshev(size_t order);
 
-    double apply(double x, double y, double instFlux) const override {
-        return instFlux * this->evaluate(afw::geom::Point2D(x, y));
-    }
+    double apply(double x, double y, double instFlux) const override;
 
-    void dump(std::ostream &stream = std::cout) const override { this->toString(); }
+    void dump(std::ostream &stream = std::cout) const override {
+        stream << "PhotometryTransfoChebyshev (" << _coefficients.getShape() << " coefficients in y,x)";
+    }
 
     int getNpar() const override { return _coefficients.getSize<0>() * _coefficients.getSize<1>(); }
 
@@ -121,6 +123,11 @@ public:
         return nullptr;
         // return std::unique_ptr<PhotometryTransfo>(new PhotometryTransfoChebyshev());
     }
+
+private:
+    afw::geom::AffineTransform _toChebyshevRange;  // maps points from the bbox to [-1,1]x[-1,1]
+
+    ndarray::Array<double, 2, 2> _coefficients;  // shape=(orderY+1, orderX+1)
 };
 
 }  // namespace jointcal

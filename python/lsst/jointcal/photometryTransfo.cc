@@ -21,6 +21,8 @@
  */
 
 #include "pybind11/pybind11.h"
+#include "numpy/arrayobject.h"
+#include "ndarray/pybind11.h"
 
 #include "lsst/jointcal/PhotometryTransfo.h"
 
@@ -49,11 +51,24 @@ void declarePhotometryTransfoSpatiallyInvariant(py::module &mod) {
     cls.def(py::init<double>(), "value"_a = 1);
 }
 
+void declarePhotometryTransfoChebyshev(py::module &mod) {
+    py::class_<PhotometryTransfoChebyshev, std::shared_ptr<PhotometryTransfoChebyshev>, PhotometryTransfo>
+            cls(mod, "PhotometryTransfoChebyshev");
+
+    cls.def(py::init<size_t>(), "order"_a);
+}
+
 PYBIND11_PLUGIN(photometryTransfo) {
     py::module mod("photometryTransfo");
 
+    if (_import_array() < 0) {
+        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
+        return nullptr;
+    }
+
     declarePhotometryTransfo(mod);
     declarePhotometryTransfoSpatiallyInvariant(mod);
+    declarePhotometryTransfoChebyshev(mod);
 
     return mod.ptr();
 }

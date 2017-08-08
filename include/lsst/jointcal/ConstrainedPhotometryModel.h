@@ -30,7 +30,8 @@ public:
 
     void offsetParams(Eigen::VectorXd const &delta) override {
         for (auto &i : _myMap) {
-            i.second->offsetParams(&delta(i.second->getIndex()));
+            auto mapping = i.second.get();
+            mapping->offsetParams(delta.segment(mapping->getIndex(), mapping->getNpar()));
         }
     }
 

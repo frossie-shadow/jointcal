@@ -16,7 +16,7 @@ class PhotometryTransfoSpatiallyInvariantTestCase(lsst.utils.tests.TestCase):
         self.assertEqual(result, self.instFlux)
 
     def test_offsetParams(self):
-        """Note that offsetParams offsets by `-delta`."""
+        """Test offsetting; note that offsetParams offsets by `-delta`."""
         delta = np.array(-1)
         self.transfo.offsetParams(delta)
         result = self.transfo.apply(1, 2, self.instFlux)
@@ -29,12 +29,23 @@ class PhotometryTransfoSpatiallyInvariantTestCase(lsst.utils.tests.TestCase):
 
 class PhotometryTransfoChebyshevTestCase(lsst.utils.tests.TestCase):
     def setUp(self):
-        self.transfo = lsst.jointcal.photometryTransfo.PhotometryTransfoChebyshev()
+        self.transfo = lsst.jointcal.photometryTransfo.PhotometryTransfoChebyshev(2)
 
     def test_apply(self):
         instFlux = 3.0
         result = self.transfo.apply(1, 2, instFlux)
         self.assertEqual(result, instFlux)
+
+    def test_offsetParams(self):
+        """Test offsetting; note that offsetParams offsets by `-delta`."""
+        delta = np.array((-1, -1, -1, -1))
+        self.transfo.offsetParams(delta)
+        result = self.transfo.apply(1, 2, self.instFlux)
+        self.assertEqual(result, self.instFlux*2)
+        delta = np.array(2)
+        self.transfo.offsetParams(delta)
+        result = self.transfo.apply(1, 2, self.instFlux)
+        self.assertEqual(result, 0)
 
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):
