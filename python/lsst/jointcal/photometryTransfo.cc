@@ -39,6 +39,7 @@ void declarePhotometryTransfo(py::module &mod) {
     cls.def("apply", (double (PhotometryTransfo::*)(double, double, double) const) & PhotometryTransfo::apply,
             "x"_a, "y"_a, "instFlux"_a);
     cls.def("offsetParams", &PhotometryTransfo::offsetParams);
+    cls.def("parameterDerivatives", &PhotometryTransfo::parameterDerivatives);
 
     cls.def("__str__", &PhotometryTransfo::__str__);
 }
@@ -56,6 +57,8 @@ void declarePhotometryTransfoChebyshev(py::module &mod) {
             cls(mod, "PhotometryTransfoChebyshev");
 
     cls.def(py::init<size_t>(), "order"_a);
+
+    cls.def("getCoefficients", &PhotometryTransfoChebyshev::getCoefficients);
 }
 
 PYBIND11_PLUGIN(photometryTransfo) {

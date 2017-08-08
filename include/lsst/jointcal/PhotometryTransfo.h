@@ -54,12 +54,23 @@ public:
      *
      * Equivalent to `flatten(parameters) -= delta`
      *
-     * Ordering of delta is the same as the ordering of the derivatives returned from `computeDerivatives`.
+     * Ordering of delta is the same as the ordering of the derivatives returned from `parameterDerivatives`.
      */
     virtual void offsetParams(Eigen::VectorXd const &delta) = 0;
 
     /// return a copy (allocated by new) of the transformation.
     virtual std::unique_ptr<PhotometryTransfo> clone() const = 0;
+
+    /**
+     * Compute the derivatives with respect to the parameters (i.e. the coefficients).
+     *
+     * @param[in]  x        The x coordinate to compute at (in the appropriate units for this transfo).
+     * @param[in]  y        The y coordinate to compute at (in the appropriate units for this transfo).
+     * @param[in]  instFlux     The instrument flux to compute the derivative at.
+     * @param[out] derivatives  The computed derivatives, in the same order as the deltas in offsetParams.
+     */
+    virtual void parameterDerivatives(double x, double y, double instFlux,
+                                      Eigen::VectorXd &derivatives) const = 0;
 
     void computeDerivative(Point const &where, PhotometryTransfoSpatiallyInvariant &derivative,
                            const double step = 0.01) const;
@@ -77,14 +88,19 @@ class PhotometryTransfoSpatiallyInvariant : public PhotometryTransfo {
 public:
     PhotometryTransfoSpatiallyInvariant(double value = 1) : _value(value) {}
 
+    /// @copydoc PhotometryTransfo::apply
     double apply(double x, double y, double instFlux) const override { return instFlux * _value; }
 
+    /// @copydoc PhotometryTransfo::dump
     void dump(std::ostream &stream = std::cout) const override { stream << _value; }
 
+    /// @copydoc PhotometryTransfo::getNpar
     int getNpar() const override { return 1; }
 
+    /// @copydoc PhotometryTransfo::offsetParams
     void offsetParams(Eigen::VectorXd const &delta) override { _value -= delta[0]; };
 
+    /// @copydoc PhotometryTransfo::clone
     std::unique_ptr<PhotometryTransfo> clone() const override {
         return std::unique_ptr<PhotometryTransfo>(new PhotometryTransfoSpatiallyInvariant(_value));
     }
@@ -93,6 +109,13 @@ public:
     void computeDerivative(Point const &where, PhotometryTransfoSpatiallyInvariant &derivative,
                            const double step = 0.01) const {
         derivative.setValue(1);
+    }
+
+    /// @copydoc PhotometryTransfo::parameterDerivatives
+    void parameterDerivatives(double x, double y, double instFlux,
+                              Eigen::VectorXd &derivatives) const override {
+        // the derivative of a spatially constant transfo w.r.t. that value is just the instFlux.
+        derivatives[0] = instFlux;
     }
 
 protected:
@@ -109,20 +132,32 @@ class PhotometryTransfoChebyshev : public PhotometryTransfo {
 public:
     PhotometryTransfoChebyshev(size_t order);
 
+    /// @copydoc PhotometryTransfo::apply
     double apply(double x, double y, double instFlux) const override;
 
+    /// @copydoc PhotometryTransfo::dump
     void dump(std::ostream &stream = std::cout) const override {
         stream << "PhotometryTransfoChebyshev (" << _coefficients.getShape() << " coefficients in y,x)";
     }
 
+    /// @copydoc PhotometryTransfo::getNpar
     int getNpar() const override { return _coefficients.getSize<0>() * _coefficients.getSize<1>(); }
 
+    /// @copydoc PhotometryTransfo::offsetParams
     void offsetParams(Eigen::VectorXd const &delta) override;
 
+    /// @copydoc PhotometryTransfo::clone
     std::unique_ptr<PhotometryTransfo> clone() const override {
         return nullptr;
         // return std::unique_ptr<PhotometryTransfo>(new PhotometryTransfoChebyshev());
     }
+
+    /// @copydoc PhotometryTransfo::parameterDerivatives
+    void parameterDerivatives(double x, double y, double instFlux,
+                              Eigen::VectorXd &derivatives) const override{};
+
+    /// Get the coefficients of the polynomials, as a 2d array (NOTE: order is [y][x])
+    ndarray::Array<double, 2, 2> getCoefficients() { return _coefficients; }
 
 private:
     afw::geom::AffineTransform _toChebyshevRange;  // maps points from the bbox to [-1,1]x[-1,1]

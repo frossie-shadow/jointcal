@@ -71,7 +71,6 @@ ndarray::Array<double, 2, 2> _identityChebyshev(size_t order) {
     coeffs[0][0] = 1;
     return coeffs;
 }
-
 }  // namespace
 
 PhotometryTransfoChebyshev::PhotometryTransfoChebyshev(size_t order)
@@ -84,33 +83,24 @@ double PhotometryTransfoChebyshev::apply(double x, double y, double instFlux) co
 }
 
 void PhotometryTransfoChebyshev::offsetParams(Eigen::VectorXd const &delta) {
+    // NOTE: the indexing in this method and parameterDerivatives must be kept consistent
     Eigen::VectorXd::Index k = 0;
-
-    // for (ndarray::Array<double, 2, 2>::Iterator i = _coefficients.begin(); i != _coefficients.end(); ++i) {
-    //     for (ndarray::Array<double, 2, 2>::Reference::Iterator j = i->begin(); j != i->end(); ++j) {
-    //         _coefficients[i - _coefficients.begin()][j - i->begin()] -= delta[k];
-    //         k++;
-    //     }
-    // }
     for (ndarray::Size j = 0; j < _coefficients.getSize<0>(); ++j) {
         for (ndarray::Size i = 0; i < _coefficients.getSize<1>(); ++i, ++k) {
             _coefficients[j][i] -= delta[k];
         }
     }
-    // for (ndarray::Size rowInd = 0; rowInd < _coefficients.getSize<0>(); ++rowInd) {
-    //     auto coeffRow = _coefficients[rowInd];
-    //     for (ndarray::Size colInd = 0; colInd <= rowInd; ++colInd, ++k) {
-    //         coeffRow[colInd] -= delta[k];
-    //         k++;
-    //     }
-    // }
+}
 
-    // for (auto &i : _coefficients) {
-    //     for (auto &j : i) {
-    //         _coefficients[j][i] -= delta[k];
-    //         k++;
-    //     }
-    // }
+void PhotometryTransfoChebyshev::parameterDerivatives(double x, double y, double instFlux,
+                                                      Eigen::VectorXd &derivatives) const override {
+    // NOTE: the indexing in this method and offsetParams must be kept consistent
+    Eigen::VectorXd::Index k = 0;
+    for (ndarray::Size j = 0; j < _coefficients.getSize<0>(); ++j) {
+        for (ndarray::Size i = 0; i < _coefficients.getSize<1>(); ++i, ++k) {
+            derivatives[k] = ;
+        }
+    }
 }
 }  // namespace jointcal
 }  // namespace lsst
