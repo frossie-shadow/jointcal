@@ -43,14 +43,14 @@ class PhotometryTransfoSpatiallyInvariantTestCase(lsst.utils.tests.TestCase):
         delta -= 1
         self._test_offsetParams(delta, np.array(2.0))
 
-    def test_parameterDerivatives(self):
+    def test_computeParameterDerivatives(self):
         """Test that the derivative of a spatially invariant transform is always the same."""
-        result = self.transfo.parameterDerivatives(1, 2, self.instFlux)
+        result = self.transfo.computeParameterDerivatives(1, 2, self.instFlux)
         self.assertEqual(self.instFlux, result)
-        result = self.transfo.parameterDerivatives(-5, -100, self.instFlux)
+        result = self.transfo.computeParameterDerivatives(-5, -100, self.instFlux)
         self.assertEqual(self.instFlux, result)
         transfo = lsst.jointcal.photometryTransfo.PhotometryTransfoSpatiallyInvariant(1000.0)
-        result = transfo.parameterDerivatives(1, 2, self.instFlux)
+        result = transfo.computeParameterDerivatives(1, 2, self.instFlux)
         self.assertEqual(self.instFlux, result)
 
 
@@ -89,8 +89,8 @@ class PhotometryTransfoChebyshevTestCase(PhotometryTransfoTestBase, lsst.utils.t
         expect[2, 0] = 6
         self._test_offsetParams(delta, expect)
 
-    def test_parameterDerivatives(self):
-        result = self.transfo.parameterDerivatives(self.point[0], self.point[1], self.instFlux)
+    def test_computeParameterDerivatives(self):
+        result = self.transfo.computeParameterDerivatives(self.point[0], self.point[1], self.instFlux)
         Tx = np.array([CHEBYSHEV_T[i](self.point[0]) for i in range(self.degree+1)], dtype=float)
         Ty = np.array([CHEBYSHEV_T[i](self.point[1]) for i in range(self.degree+1)], dtype=float)
         expect = []

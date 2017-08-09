@@ -60,13 +60,14 @@ void PhotometryFit::leastSquareDerivativesMeasurement(CcdImage const &ccdImage, 
 #ifdef FUTURE
         TweakPhotomMeasurementErrors(inPos, *measuredStar, _fluxError);
 #endif
-        double fluxErr = measuredStar->getFluxErr();
-        double photomFactor = _photometryModel->photomFactor(ccdImage, *measuredStar);
         H.setZero();  // we cannot be sure that all entries will be overwritten.
 
-        double residual = computeMeasurementResidual(photomFactor, *measuredStar);
+        double residual =
+                _photometryModel->transformFlux(ccdImage, *measuredStar, measuredStar->getInstFlux()) -
+                measuredStar->getFittedStar()->getFlux();
 
-        double inverseSigma = 1.0 / (photomFactor * fluxErr);
+        double inverseSigma =
+                1.0 / _photometryModel->transformFlux(ccdImage, *measuredStar, measuredStar->getFluxErr());
         double W = std::pow(inverseSigma, 2);
 
         if (_fittingModel) {
@@ -136,13 +137,15 @@ void PhotometryFit::accumulateStatImageList(CcdImageList const &ccdImageList, Ch
 
         for (auto const &measuredStar : catalog) {
             if (!measuredStar->isValid()) continue;
-            double photomFactor = _photometryModel->photomFactor(*ccdImage, *measuredStar);
-            // tweak the measurement errors
-            double sigma = (measuredStar->getFluxErr() * photomFactor);
+            double sigma =
+                    _photometryModel->transformFlux(*ccdImage, *measuredStar, measuredStar->getInstFluxErr());
+// tweak the measurement errors
 #ifdef FUTURE
             TweakPhotomMeasurementErrors(inPos, measuredStar, _fluxError);
 #endif
-            double residual = computeMeasurementResidual(photomFactor, *measuredStar);
+            double residual =
+                    _photometryModel->transformFlux(*ccdImage, *measuredStar, measuredStar->getInstFlux()) -
+                    measuredStar->getFittedStar()->getFlux();
 
             double chi2Val = std::pow(residual / sigma, 2);
             accum.addEntry(chi2Val, 1, measuredStar);

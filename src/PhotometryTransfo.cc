@@ -9,13 +9,6 @@
 namespace lsst {
 namespace jointcal {
 
-void PhotometryTransfo::computeDerivative(const Point &where, PhotometryTransfoSpatiallyInvariant &derivative,
-                                          const double step) const {
-    // double result = 0;
-    double flux1 = apply(where, 1);
-    derivative.setValue((1 - flux1) / step);
-}
-
 /**
  * PhotometryTransfoChebyshev
  */
@@ -85,7 +78,7 @@ double PhotometryTransfoChebyshev::apply(double x, double y, double instFlux) co
 }
 
 void PhotometryTransfoChebyshev::offsetParams(Eigen::VectorXd const &delta) {
-    // NOTE: the indexing in this method and parameterDerivatives must be kept consistent!
+    // NOTE: the indexing in this method and computeParameterDerivatives must be kept consistent!
     Eigen::VectorXd::Index k = 0;
     for (ndarray::Size j = 0; j <= _degree; ++j) {
         for (ndarray::Size i = 0; i + j <= _degree; ++i, ++k) {
@@ -94,8 +87,8 @@ void PhotometryTransfoChebyshev::offsetParams(Eigen::VectorXd const &delta) {
     }
 }
 
-void PhotometryTransfoChebyshev::parameterDerivatives(double x, double y, double instFlux,
-                                                      Eigen::VectorXd &derivatives) const {
+void PhotometryTransfoChebyshev::computeParameterDerivatives(double x, double y, double instFlux,
+                                                             Eigen::VectorXd &derivatives) const {
     // Algorithm: compute all the individual components recursively (since we'll need them anyway),
     // then combine them into the final answer vectors.
     Eigen::VectorXd Tnx(_degree + 1);

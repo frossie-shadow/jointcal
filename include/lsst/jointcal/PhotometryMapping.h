@@ -4,14 +4,14 @@
 
 #include <memory>
 
+#include "lsst/jointcal/CcdImage.h"
 #include "lsst/jointcal/Eigenstuff.h"
+#include "lsst/jointcal/MeasuredStar.h"
 #include "lsst/jointcal/Point.h"
 #include "lsst/jointcal/PhotometryTransfo.h"
 
 namespace lsst {
 namespace jointcal {
-
-class Point;
 
 class PhotometryMapping {
 public:
@@ -44,6 +44,9 @@ public:
      * evaluating the derivatives w.r.t parameters is not much longer than just transforming.
      */
     void computeTransformAndDerivatives(Point const &where, double &out, Eigen::MatrixX2d &H) const;
+
+    void computeParameterDerivatives(MeasuredStar const &measuredStar, CcdImage const &ccdImage,
+                                     Eigen::VectorXd &derivatives){};
 
     //! The same as above but without the parameter derivatives (used to evaluate chi^2)
     void transformPosAndErrors(Point const &where, double &out) const;

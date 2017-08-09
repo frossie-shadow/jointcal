@@ -56,7 +56,8 @@ public:
      *
      * Equivalent to `flatten(parameters) -= delta`
      *
-     * Ordering of delta is the same as the ordering of the derivatives returned from `parameterDerivatives`.
+     * Ordering of delta is the same as the ordering of the derivatives returned from
+     * `computeParameterDerivatives`.
      */
     virtual void offsetParams(Eigen::VectorXd const &delta) = 0;
 
@@ -71,11 +72,8 @@ public:
      * @param[in]  instFlux     The instrument flux to compute the derivative at.
      * @param[out] derivatives  The computed derivatives, in the same order as the deltas in offsetParams.
      */
-    virtual void parameterDerivatives(double x, double y, double instFlux,
-                                      Eigen::VectorXd &derivatives) const = 0;
-
-    void computeDerivative(Point const &where, PhotometryTransfoSpatiallyInvariant &derivative,
-                           const double step = 0.01) const;
+    virtual void computeParameterDerivatives(double x, double y, double instFlux,
+                                             Eigen::VectorXd &derivatives) const = 0;
 };
 
 /*
@@ -107,15 +105,9 @@ public:
         return std::unique_ptr<PhotometryTransfo>(new PhotometryTransfoSpatiallyInvariant(_value));
     }
 
-    /// The spatial derivative of a constant zeropoint is 1.
-    void computeDerivative(Point const &where, PhotometryTransfoSpatiallyInvariant &derivative,
-                           const double step = 0.01) const {
-        derivative.setValue(1);
-    }
-
-    /// @copydoc PhotometryTransfo::parameterDerivatives
-    void parameterDerivatives(double x, double y, double instFlux,
-                              Eigen::VectorXd &derivatives) const override {
+    /// @copydoc PhotometryTransfo::computeParameterDerivatives
+    void computeParameterDerivatives(double x, double y, double instFlux,
+                                     Eigen::VectorXd &derivatives) const override {
         // the derivative of a spatially constant transfo w.r.t. that value is just the instFlux.
         derivatives[0] = instFlux;
     }
@@ -176,9 +168,9 @@ public:
         // return std::unique_ptr<PhotometryTransfo>(new PhotometryTransfoChebyshev());
     }
 
-    /// @copydoc PhotometryTransfo::parameterDerivatives
-    void parameterDerivatives(double x, double y, double instFlux,
-                              Eigen::VectorXd &derivatives) const override;
+    /// @copydoc PhotometryTransfo::computeParameterDerivatives
+    void computeParameterDerivatives(double x, double y, double instFlux,
+                                     Eigen::VectorXd &derivatives) const override;
 
     /// Get a copy of the coefficients of the polynomials, as a 2d array (NOTE: degree is [y][x])
     ndarray::Array<double, 2, 2> getCoefficients() { return ndarray::copy(_coefficients); }

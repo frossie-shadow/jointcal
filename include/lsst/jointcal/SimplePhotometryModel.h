@@ -38,29 +38,16 @@ public:
      */
     unsigned assignIndices(std::string const &whatToFit, unsigned firstIndex) override;
 
-    /**
-     * Offset the parameters by the provided amounts.
-     *
-     * The shifts are applied according to the indices given in AssignIndices.a
-     *
-     * @param[in]  delta  vector of offsets to apply
-     */
+    /// @copydoc PhotometryModel::offsetParams
     void offsetParams(Eigen::VectorXd const &delta) override;
 
-    /**
-     * Return the "photometric factor" for this ccdImage.
-     *
-     * Multiply this by a Calib's flux/magnitude zero-point to get the updated fluxMag0.
-     *
-     * @param[in]  ccdImage  The ccdImage to get the photometric factor for.
-     * @param[in]  where     Ignored
-     *
-     * @return     The photometric factor at the given location on ccdImage.
-     */
-    double photomFactor(CcdImage const &ccdImage, Point const &where = Point()) const override;
+    /// @copydoc PhotometryModel::transformFlux
+    double transformFlux(CcdImage const &ccdImage, MeasuredStar const &star, double instFlux) const override;
 
+    /// @copydoc PhotometryModel::getMappingIndices
     void getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) override;
 
+    /// @copydoc PhotometryModel::computeParameterDerivatives
     void computeParameterDerivatives(MeasuredStar const &measuredStar, CcdImage const &ccdImage,
                                      Eigen::VectorXd &derivatives) override;
 

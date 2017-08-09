@@ -39,10 +39,11 @@ void SimplePhotometryModel::offsetParams(Eigen::VectorXd const &delta) {
     }
 }
 
-double SimplePhotometryModel::photomFactor(CcdImage const &ccdImage, Point const &where) const {
-    auto mapping = this->findMapping(ccdImage, "photomFactor");
-    return mapping->getTransfo().apply(where, 1.0);
-}
+double SimplePhotometryModel::transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
+                                            double instFlux) const {
+    auto mapping = this->findMapping(ccdImage, "transformFlux");
+    return mapping->getTransfo().apply(star, star.getInstFlux());
+}  // namespace jointcal
 
 void SimplePhotometryModel::getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) {
     auto mapping = this->findMapping(ccdImage, "getMappingIndices");
@@ -53,9 +54,9 @@ void SimplePhotometryModel::getMappingIndices(CcdImage const &ccdImage, std::vec
 void SimplePhotometryModel::computeParameterDerivatives(MeasuredStar const &measuredStar,
                                                         CcdImage const &ccdImage,
                                                         Eigen::VectorXd &derivatives) {
-    // auto mapping = this->findMapping(ccdImage, "computeParameterDerivatives");
-    // TODO: use mapping->computeDerivative(measuredStar)*measuredStar.getFlux() here instead.
-    derivatives[0] = 1. * measuredStar.getFlux();
+    auto mapping = this->findMapping(ccdImage, "computeParameterDerivatives");
+    mapping->computeParameterDerivatives(measuredStar.x, measuredStar.y, measuredStar.getInstFlux(),
+                                         derivatives);
 }
 
 PhotometryMapping *SimplePhotometryModel::findMapping(CcdImage const &ccdImage, std::string name) const {

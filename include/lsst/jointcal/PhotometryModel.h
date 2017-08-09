@@ -38,15 +38,17 @@ public:
     virtual void offsetParams(Eigen::VectorXd const &delta) = 0;
 
     /**
-     * Return the "photometric factor" at a given location on a ccdImage.
+     * Return the on-sky transformed flux for measuredStar on ccdImage.
      *
-     * Multiply this by a Calib's flux/magnitude zero-point to get the updated fluxMag0 at that point.
+     * @param[in]  ccdImage  The ccdImage where measuredStar resides.
+     * @param      star      The measured star position to compute the transform at.
+     * @param[in]  instFlux  The instrument flux to transform.
      *
-     * @param[in]  ccdImage  The ccdImage to get the photometric factor for.
-     * @param[in]  where     Possition on ccdImage in ccd coordinates.
-     *
-     * @return     The photometric factor at the given location on ccdImage.
+     * @return     The on-sky flux transformed from instFlux at measuredStar's position.
      */
+    virtual double transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
+                                 double instFlux) const = 0;
+
     virtual double photomFactor(CcdImage const &ccdImage, Point const &where) const = 0;
 
     /// Get the mapping associated with ccdImage.
