@@ -66,16 +66,18 @@ afw::geom::AffineTransform makeChebyshevRangeTransform(afw::geom::Box2D const bb
 
 // Initialize a "unit" Chebyshev
 ndarray::Array<double, 2, 2> _identityChebyshev(size_t order) {
-    ndarray::Array<double, 2, 2> coeffs = ndarray::allocate(ndarray::makeVector(order, order));
+    ndarray::Array<double, 2, 2> coeffs = ndarray::allocate(ndarray::makeVector(order + 1, order + 1));
     coeffs.deep() = 0.0;
     coeffs[0][0] = 1;
     return coeffs;
 }
 }  // namespace
 
-PhotometryTransfoChebyshev::PhotometryTransfoChebyshev(size_t order)
-        : _toChebyshevRange(makeChebyshevRangeTransform(afw::geom::Box2D())),
-          _coefficients(_identityChebyshev(order)) {}
+PhotometryTransfoChebyshev::PhotometryTransfoChebyshev(size_t order, afw::geom::Box2I const &bbox)
+        : _toChebyshevRange(makeChebyshevRangeTransform(afw::geom::Box2D(bbox))),
+          _coefficients(_identityChebyshev(order)),
+          _order(order),
+          _nParameters((order + 1) * (order + 2) / 2) {}
 
 double PhotometryTransfoChebyshev::apply(double x, double y, double instFlux) const {
     return instFlux *
@@ -83,22 +85,38 @@ double PhotometryTransfoChebyshev::apply(double x, double y, double instFlux) co
 }
 
 void PhotometryTransfoChebyshev::offsetParams(Eigen::VectorXd const &delta) {
-    // NOTE: the indexing in this method and parameterDerivatives must be kept consistent
+    // NOTE: the indexing in this method and parameterDerivatives must be kept consistent!
     Eigen::VectorXd::Index k = 0;
-    for (ndarray::Size j = 0; j < _coefficients.getSize<0>(); ++j) {
-        for (ndarray::Size i = 0; i < _coefficients.getSize<1>(); ++i, ++k) {
+    for (ndarray::Size j = 0; j <= _order; ++j) {
+        for (ndarray::Size i = 0; i + j <= _order; ++i, ++k) {
             _coefficients[j][i] -= delta[k];
         }
     }
 }
 
 void PhotometryTransfoChebyshev::parameterDerivatives(double x, double y, double instFlux,
-                                                      Eigen::VectorXd &derivatives) const override {
-    // NOTE: the indexing in this method and offsetParams must be kept consistent
+                                                      Eigen::VectorXd &derivatives) const {
+    // Algorithm: compute all the individual components recursively (since we'll need them anyway),
+    // then combine them into the final answer vectors.
+    Eigen::VectorXd Tnx(_order + 1);
+    Eigen::VectorXd Tmy(_order + 1);
+    Tnx[0] = 1;
+    Tmy[0] = 1;
+    if (_order > 1) {
+        Tnx[1] = x;
+        Tmy[1] = y;
+    }
+    for (ndarray::Size i = 2; i <= _order; ++i) {
+        Tnx[i] = 2 * x * Tnx[i - 1] - Tnx[i - 2];
+        Tmy[i] = 2 * y * Tmy[i - 1] - Tmy[i - 2];
+    }
+
+    // NOTE: the indexing in this method and offsetParams must be kept consistent!
     Eigen::VectorXd::Index k = 0;
-    for (ndarray::Size j = 0; j < _coefficients.getSize<0>(); ++j) {
-        for (ndarray::Size i = 0; i < _coefficients.getSize<1>(); ++i, ++k) {
-            derivatives[k] = ;
+    for (ndarray::Size j = 0; j <= _order; ++j) {
+        auto const iMax = _order - j;  // to save re-computing `i+j <= order` every inner step.
+        for (ndarray::Size i = 0; i <= iMax; ++i, ++k) {
+            derivatives[k] = instFlux * Tmy[j] * Tnx[i];
         }
     }
 }

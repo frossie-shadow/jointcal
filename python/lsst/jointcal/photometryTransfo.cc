@@ -23,6 +23,8 @@
 #include "pybind11/pybind11.h"
 #include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
+#include "ndarray/eigen.h"
+#include "Eigen/Core"
 
 #include "lsst/jointcal/PhotometryTransfo.h"
 
@@ -39,7 +41,12 @@ void declarePhotometryTransfo(py::module &mod) {
     cls.def("apply", (double (PhotometryTransfo::*)(double, double, double) const) & PhotometryTransfo::apply,
             "x"_a, "y"_a, "instFlux"_a);
     cls.def("offsetParams", &PhotometryTransfo::offsetParams);
-    cls.def("parameterDerivatives", &PhotometryTransfo::parameterDerivatives);
+    cls.def("getNpar", &PhotometryTransfo::getNpar);
+    cls.def("parameterDerivatives", [](PhotometryTransfo const &self, double x, double y, double instFlux) {
+        Eigen::VectorXd derivatives(self.getNpar());
+        self.parameterDerivatives(x, y, instFlux, derivatives);
+        return derivatives;
+    });
 
     cls.def("__str__", &PhotometryTransfo::__str__);
 }
@@ -56,7 +63,7 @@ void declarePhotometryTransfoChebyshev(py::module &mod) {
     py::class_<PhotometryTransfoChebyshev, std::shared_ptr<PhotometryTransfoChebyshev>, PhotometryTransfo>
             cls(mod, "PhotometryTransfoChebyshev");
 
-    cls.def(py::init<size_t>(), "order"_a);
+    cls.def(py::init<size_t, afw::geom::Box2I const &>(), "order"_a, "bbox"_a);
 
     cls.def("getCoefficients", &PhotometryTransfoChebyshev::getCoefficients);
 }

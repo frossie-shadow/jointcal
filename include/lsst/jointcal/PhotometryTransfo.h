@@ -6,9 +6,11 @@
 #include <sstream>
 #include <memory>
 
+#include "Eigen/Core"
 #include "ndarray.h"
 
 #include "lsst/afw/geom/AffineTransform.h"
+#include "lsst/afw/geom/Box.h"
 #include "lsst/afw/geom/Point.h"
 #include "lsst/jointcal/Point.h"
 
@@ -128,9 +130,31 @@ private:
     double _value;
 };
 
+/**
+ * nth-order 2d Chebyshev photometry transfo.
+ *
+ * The 2-d Chebyshev polynomial used here is defined as:
+ *
+ *  @f[
+ *  f(x,y) = \sum_i \sum_j a_{i,j} T_i(x) T_j(y)
+ *  @f]
+ *
+ * where @f$T_n(x)@f$ is the n-th order Chebyshev polynomial of @f$x@f$ and
+ * @f$a_{i,j}@f$ is the corresponding coefficient of the (i,j) polynomial term.
+ *
+ * Note that the polynomial order=n means that the highest terms will be of the form:
+ *   @f[
+ *   a_{0,n}*x^n*y^0, a_{n-1,1}*x^(n-1)*y^1, ..., a_{1,n-1}*x^1*y^(n-1), a_{n,0}*x^0*y^n
+ *   @f]
+ */
 class PhotometryTransfoChebyshev : public PhotometryTransfo {
 public:
-    PhotometryTransfoChebyshev(size_t order);
+    /**
+     * Create a Chebyshev transfo with terms up to order in (x*y)
+     *
+     * @param[in]  order  The maximum order in (x*y).
+     */
+    PhotometryTransfoChebyshev(size_t order, afw::geom::Box2I const &bbox);
 
     /// @copydoc PhotometryTransfo::apply
     double apply(double x, double y, double instFlux) const override;
@@ -141,7 +165,7 @@ public:
     }
 
     /// @copydoc PhotometryTransfo::getNpar
-    int getNpar() const override { return _coefficients.getSize<0>() * _coefficients.getSize<1>(); }
+    int getNpar() const override { return _nParameters; }
 
     /// @copydoc PhotometryTransfo::offsetParams
     void offsetParams(Eigen::VectorXd const &delta) override;
@@ -154,15 +178,17 @@ public:
 
     /// @copydoc PhotometryTransfo::parameterDerivatives
     void parameterDerivatives(double x, double y, double instFlux,
-                              Eigen::VectorXd &derivatives) const override{};
+                              Eigen::VectorXd &derivatives) const override;
 
-    /// Get the coefficients of the polynomials, as a 2d array (NOTE: order is [y][x])
-    ndarray::Array<double, 2, 2> getCoefficients() { return _coefficients; }
+    /// Get a copy of the coefficients of the polynomials, as a 2d array (NOTE: order is [y][x])
+    ndarray::Array<double, 2, 2> getCoefficients() { return ndarray::copy(_coefficients); }
 
 private:
     afw::geom::AffineTransform _toChebyshevRange;  // maps points from the bbox to [-1,1]x[-1,1]
 
-    ndarray::Array<double, 2, 2> _coefficients;  // shape=(orderY+1, orderX+1)
+    ndarray::Array<double, 2, 2> _coefficients;  // shape=(order+1, order+1)
+    ndarray::Size _order;
+    ndarray::Size _nParameters;
 };
 
 }  // namespace jointcal
