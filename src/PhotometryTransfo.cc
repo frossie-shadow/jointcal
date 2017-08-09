@@ -65,19 +65,19 @@ afw::geom::AffineTransform makeChebyshevRangeTransform(afw::geom::Box2D const bb
 }
 
 // Initialize a "unit" Chebyshev
-ndarray::Array<double, 2, 2> _identityChebyshev(size_t order) {
-    ndarray::Array<double, 2, 2> coeffs = ndarray::allocate(ndarray::makeVector(order + 1, order + 1));
+ndarray::Array<double, 2, 2> _identityChebyshev(size_t degree) {
+    ndarray::Array<double, 2, 2> coeffs = ndarray::allocate(ndarray::makeVector(degree + 1, degree + 1));
     coeffs.deep() = 0.0;
     coeffs[0][0] = 1;
     return coeffs;
 }
 }  // namespace
 
-PhotometryTransfoChebyshev::PhotometryTransfoChebyshev(size_t order, afw::geom::Box2I const &bbox)
+PhotometryTransfoChebyshev::PhotometryTransfoChebyshev(size_t degree, afw::geom::Box2I const &bbox)
         : _toChebyshevRange(makeChebyshevRangeTransform(afw::geom::Box2D(bbox))),
-          _coefficients(_identityChebyshev(order)),
-          _order(order),
-          _nParameters((order + 1) * (order + 2) / 2) {}
+          _coefficients(_identityChebyshev(degree)),
+          _degree(degree),
+          _nParameters((degree + 1) * (degree + 2) / 2) {}
 
 double PhotometryTransfoChebyshev::apply(double x, double y, double instFlux) const {
     return instFlux *
@@ -87,8 +87,8 @@ double PhotometryTransfoChebyshev::apply(double x, double y, double instFlux) co
 void PhotometryTransfoChebyshev::offsetParams(Eigen::VectorXd const &delta) {
     // NOTE: the indexing in this method and parameterDerivatives must be kept consistent!
     Eigen::VectorXd::Index k = 0;
-    for (ndarray::Size j = 0; j <= _order; ++j) {
-        for (ndarray::Size i = 0; i + j <= _order; ++i, ++k) {
+    for (ndarray::Size j = 0; j <= _degree; ++j) {
+        for (ndarray::Size i = 0; i + j <= _degree; ++i, ++k) {
             _coefficients[j][i] -= delta[k];
         }
     }
@@ -98,23 +98,23 @@ void PhotometryTransfoChebyshev::parameterDerivatives(double x, double y, double
                                                       Eigen::VectorXd &derivatives) const {
     // Algorithm: compute all the individual components recursively (since we'll need them anyway),
     // then combine them into the final answer vectors.
-    Eigen::VectorXd Tnx(_order + 1);
-    Eigen::VectorXd Tmy(_order + 1);
+    Eigen::VectorXd Tnx(_degree + 1);
+    Eigen::VectorXd Tmy(_degree + 1);
     Tnx[0] = 1;
     Tmy[0] = 1;
-    if (_order > 1) {
+    if (_degree > 1) {
         Tnx[1] = x;
         Tmy[1] = y;
     }
-    for (ndarray::Size i = 2; i <= _order; ++i) {
+    for (ndarray::Size i = 2; i <= _degree; ++i) {
         Tnx[i] = 2 * x * Tnx[i - 1] - Tnx[i - 2];
         Tmy[i] = 2 * y * Tmy[i - 1] - Tmy[i - 2];
     }
 
     // NOTE: the indexing in this method and offsetParams must be kept consistent!
     Eigen::VectorXd::Index k = 0;
-    for (ndarray::Size j = 0; j <= _order; ++j) {
-        auto const iMax = _order - j;  // to save re-computing `i+j <= order` every inner step.
+    for (ndarray::Size j = 0; j <= _degree; ++j) {
+        auto const iMax = _degree - j;  // to save re-computing `i+j <= degree` every inner step.
         for (ndarray::Size i = 0; i <= iMax; ++i, ++k) {
             derivatives[k] = instFlux * Tmy[j] * Tnx[i];
         }

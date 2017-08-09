@@ -131,7 +131,7 @@ private:
 };
 
 /**
- * nth-order 2d Chebyshev photometry transfo.
+ * nth-degree 2d Chebyshev photometry transfo.
  *
  * The 2-d Chebyshev polynomial used here is defined as:
  *
@@ -139,10 +139,10 @@ private:
  *  f(x,y) = \sum_i \sum_j a_{i,j} T_i(x) T_j(y)
  *  @f]
  *
- * where @f$T_n(x)@f$ is the n-th order Chebyshev polynomial of @f$x@f$ and
+ * where @f$T_n(x)@f$ is the n-th degree Chebyshev polynomial of @f$x@f$ and
  * @f$a_{i,j}@f$ is the corresponding coefficient of the (i,j) polynomial term.
  *
- * Note that the polynomial order=n means that the highest terms will be of the form:
+ * Note that the polynomial degree=n means that the highest terms will be of the form:
  *   @f[
  *   a_{0,n}*x^n*y^0, a_{n-1,1}*x^(n-1)*y^1, ..., a_{1,n-1}*x^1*y^(n-1), a_{n,0}*x^0*y^n
  *   @f]
@@ -150,11 +150,11 @@ private:
 class PhotometryTransfoChebyshev : public PhotometryTransfo {
 public:
     /**
-     * Create a Chebyshev transfo with terms up to order in (x*y)
+     * Create a Chebyshev transfo with terms up to degree in (x*y)
      *
-     * @param[in]  order  The maximum order in (x*y).
+     * @param[in]  degree  The maximum degree in (x*y).
      */
-    PhotometryTransfoChebyshev(size_t order, afw::geom::Box2I const &bbox);
+    PhotometryTransfoChebyshev(size_t degree, afw::geom::Box2I const &bbox);
 
     /// @copydoc PhotometryTransfo::apply
     double apply(double x, double y, double instFlux) const override;
@@ -180,14 +180,14 @@ public:
     void parameterDerivatives(double x, double y, double instFlux,
                               Eigen::VectorXd &derivatives) const override;
 
-    /// Get a copy of the coefficients of the polynomials, as a 2d array (NOTE: order is [y][x])
+    /// Get a copy of the coefficients of the polynomials, as a 2d array (NOTE: degree is [y][x])
     ndarray::Array<double, 2, 2> getCoefficients() { return ndarray::copy(_coefficients); }
 
 private:
     afw::geom::AffineTransform _toChebyshevRange;  // maps points from the bbox to [-1,1]x[-1,1]
 
-    ndarray::Array<double, 2, 2> _coefficients;  // shape=(order+1, order+1)
-    ndarray::Size _order;
+    ndarray::Array<double, 2, 2> _coefficients;  // shape=(degree+1, degree+1)
+    ndarray::Size _degree;
     ndarray::Size _nParameters;
 };
 

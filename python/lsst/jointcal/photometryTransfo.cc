@@ -63,7 +63,7 @@ void declarePhotometryTransfoChebyshev(py::module &mod) {
     py::class_<PhotometryTransfoChebyshev, std::shared_ptr<PhotometryTransfoChebyshev>, PhotometryTransfo>
             cls(mod, "PhotometryTransfoChebyshev");
 
-    cls.def(py::init<size_t, afw::geom::Box2I const &>(), "order"_a, "bbox"_a);
+    cls.def(py::init<size_t, afw::geom::Box2I const &>(), "degree"_a, "bbox"_a);
 
     cls.def("getCoefficients", &PhotometryTransfoChebyshev::getCoefficients);
 }

@@ -62,8 +62,8 @@ class PhotometryTransfoChebyshevTestCase(PhotometryTransfoTestBase, lsst.utils.t
         self.bbox = lsst.afw.geom.Box2I(lsst.afw.geom.Point2I(-3, -3), lsst.afw.geom.Point2I(3, 3))
         self.instFlux = 5.0
         self.point = [2.0, 3.0]
-        self.order = 2
-        self.transfo = lsst.jointcal.photometryTransfo.PhotometryTransfoChebyshev(self.order, self.bbox)
+        self.degree = 2
+        self.transfo = lsst.jointcal.photometryTransfo.PhotometryTransfoChebyshev(self.degree, self.bbox)
 
     def test_apply(self):
         result = self.transfo.apply(1, 2, self.instFlux)
@@ -72,7 +72,7 @@ class PhotometryTransfoChebyshevTestCase(PhotometryTransfoTestBase, lsst.utils.t
     def test_offsetParams(self):
         """Test offsetting; note that offsetParams offsets by `-delta`."""
         delta = np.zeros(self.transfo.getNpar(), dtype=float)
-        expect = np.zeros((self.order+1, self.order+1), dtype=float)
+        expect = np.zeros((self.degree+1, self.degree+1), dtype=float)
         expect[0, 0] = 1
         self._test_offsetParams(delta, expect)
         delta[0] = 1
@@ -91,24 +91,13 @@ class PhotometryTransfoChebyshevTestCase(PhotometryTransfoTestBase, lsst.utils.t
 
     def test_parameterDerivatives(self):
         result = self.transfo.parameterDerivatives(self.point[0], self.point[1], self.instFlux)
-        Tx = np.array([CHEBYSHEV_T[i](self.point[0]) for i in range(self.order+1)], dtype=float)
-        Ty = np.array([CHEBYSHEV_T[i](self.point[1]) for i in range(self.order+1)], dtype=float)
+        Tx = np.array([CHEBYSHEV_T[i](self.point[0]) for i in range(self.degree+1)], dtype=float)
+        Ty = np.array([CHEBYSHEV_T[i](self.point[1]) for i in range(self.degree+1)], dtype=float)
         expect = []
         for j in range(len(Ty)):
-            for i in range(0, self.order-j+1):
+            for i in range(0, self.degree-j+1):
                 expect.append(Ty[j]*Tx[i]*self.instFlux)
         self.assertFloatsAlmostEqual(np.array(expect), result)
-
-        # self.transfo.offsetParams(delta)
-        # result = self.transfo.apply(self.point[0], self.point[1], self.instFlux)
-        # self.assertEqual(result, self.instFlux)
-        # delta = np.array([-1, -2, -3, -4], dtype=float)
-        # coefficients = np.array([1, 0, 0, 0]) - delta
-        # self.transfo.offsetParams(delta.T)
-        # result = self.transfo.apply(self.point[0], self.point[1], self.instFlux)
-        # import os; print(os.getpid()); import ipdb; ipdb.set_trace();
-        # expect = np.dot(Ty[], np.dot(coefficients, Tx[i]))
-        # self.assertEqual(result, expect)
 
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):
