@@ -4,6 +4,8 @@
 
 #include <memory>
 
+#include "lsst/afw/image/PhotoCalib.h"
+
 #include "lsst/jointcal/CcdImage.h"
 #include "lsst/jointcal/Eigenstuff.h"
 #include "lsst/jointcal/MeasuredStar.h"
@@ -38,18 +40,28 @@ public:
     }
 
     /**
-     * Applies the mapping and evaluates the derivatives with respect to the fitted parameters.
+     * Return the on-sky transformed flux at (x,y).
      *
-     * This is grouped into a single call because for most models,
-     * evaluating the derivatives w.r.t parameters is not much longer than just transforming.
+     * @param[in]  x         The x coordinate to compute at (in the appropriate units for this transfo).
+     * @param[in]  y         The y coordinate to compute at (in the appropriate units for this transfo).
+     * @param[in]  instFlux  The instrument flux to transform.
+     *
+     * @return     The on-sky flux transformed from instFlux at measuredStar's position.
      */
-    void computeTransformAndDerivatives(Point const &where, double &out, Eigen::MatrixX2d &H) const;
+    double transformFlux(double x, double y, double instFlux) const { return transfo->apply(x, y, instFlux); }
 
-    void computeParameterDerivatives(MeasuredStar const &measuredStar, CcdImage const &ccdImage,
-                                     Eigen::VectorXd &derivatives){};
-
-    //! The same as above but without the parameter derivatives (used to evaluate chi^2)
-    void transformPosAndErrors(Point const &where, double &out) const;
+    /**
+     * Compute the derivatives with respect to the parameters (i.e. the coefficients).
+     *
+     * @param[in]  x        The x coordinate to compute at (in the appropriate units for this transfo).
+     * @param[in]  y        The y coordinate to compute at (in the appropriate units for this transfo).
+     * @param[in]  instFlux     The instrument flux to compute the derivative at.
+     * @param[out] derivatives  The computed derivatives, in the same order as the deltas in offsetParams.
+     */
+    void computeParameterDerivatives(double x, double y, double instFlux,
+                                     Eigen::VectorXd &derivatives) const {
+        transfo->computeParameterDerivatives(x, y, instFlux, derivatives);
+    }
 
     void offsetParams(Eigen::VectorXd const &delta) { transfo->offsetParams(delta); }
 
@@ -59,7 +71,30 @@ public:
     /// Set the index of this mapping in the grand fit.
     void setIndex(unsigned i) { index = i; }
 
-    PhotometryTransfo const &getTransfo() { return *(transfo.get()); }
+    /**
+     * Return this mapping represented as a PhotoCalib.
+     */
+    std::unique_ptr<afw::image::PhotoCalib> toPhotoCalib() const {
+        return std::unique_ptr<afw::image::PhotoCalib>(new afw::image::PhotoCalib(0.0));
+    }
+
+    std::shared_ptr<PhotometryTransfo> getTransfo() { return transfo; }
+
+protected:
+    // Start index of this mapping in the "grand" fit
+    unsigned index;
+
+    // the actual transformation to be fit
+    std::shared_ptr<PhotometryTransfo> transfo;
+};
+
+/**
+ * Class representing a two-level photometric transform: one for the ccd and one for the visit.
+ */
+class TwoTransfoPhotometryMapping : public PhotometryTransfo {
+    std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib() const {
+        return std::unique_ptr<afw::image::PhotoCalib>(new afw::image::PhotoCalib(0.0));
+    }
 
 protected:
     // Start index of this mapping in the "grand" fit

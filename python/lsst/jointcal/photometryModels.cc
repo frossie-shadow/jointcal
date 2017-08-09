@@ -39,7 +39,7 @@ namespace {
 void declarePhotometryModel(py::module &mod) {
     py::class_<PhotometryModel, std::shared_ptr<PhotometryModel>> cls(mod, "PhotometryModel");
 
-    cls.def("photomFactor", &PhotometryModel::photomFactor, "ccdImage"_a, "where"_a = Point());
+    cls.def("toPhotoCalib", &PhotometryModel::toPhotoCalib);
 }
 
 void declareSimplePhotometryModel(py::module &mod) {

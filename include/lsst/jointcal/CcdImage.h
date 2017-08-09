@@ -141,12 +141,12 @@ public:
     double getMjd() const { return _mjd; }
 
     //! Return the exposure's photometric calibration
-    std::shared_ptr<afw::image::PhotoCalib> getPhotoCalib() { return _photoCalib; }
+    std::shared_ptr<afw::image::PhotoCalib> getPhotoCalib() const { return _photoCalib; }
 
     /**
      * @brief      Gets the boresight RA/Dec.
      */
-    lsst::afw::coord::IcrsCoord getBoresightRaDec() { return _boresightRaDec; }
+    lsst::afw::coord::IcrsCoord getBoresightRaDec() const { return _boresightRaDec; }
 
     //!
     double getHourAngle() const { return _hourAngle; }

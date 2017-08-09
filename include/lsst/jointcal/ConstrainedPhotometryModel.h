@@ -26,21 +26,21 @@ public:
     ConstrainedPhotometryModel &operator=(ConstrainedPhotometryModel const &) = delete;
     ConstrainedPhotometryModel &operator=(ConstrainedPhotometryModel &&) = delete;
 
-    unsigned assignIndices(std::string const &whatToFit, unsigned firstIndex) override { return 0; }
+    /// @copydoc PhotometryModel::assignIndices
+    unsigned assignIndices(std::string const &whatToFit, unsigned firstIndex) override;
 
-    void offsetParams(Eigen::VectorXd const &delta) override {
-        for (auto &i : _myMap) {
-            auto mapping = i.second.get();
-            mapping->offsetParams(delta.segment(mapping->getIndex(), mapping->getNpar()));
-        }
-    }
+    /// @copydoc PhotometryModel::offsetParams
+    void offsetParams(Eigen::VectorXd const &delta) override;
 
-    double photomFactor(CcdImage const &ccdImage, Point const &where) const override { return 0; }
+    /// @copydoc PhotometryModel::transformFlux
+    double transformFlux(CcdImage const &ccdImage, MeasuredStar const &star, double instFlux) const override;
 
-    void getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) override {}
+    /// @copydoc PhotometryModel::getMappingIndices
+    void getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) override;
 
+    /// @copydoc PhotometryModel::computeParameterDerivatives
     void computeParameterDerivatives(MeasuredStar const &measuredStar, CcdImage const &ccdImage,
-                                     Eigen::VectorXd &derivatives) override {}
+                                     Eigen::VectorXd &derivatives) override;
 
 private:
     PhotometryMapping *findMapping(CcdImage const &ccdImage, std::string name) const override {
@@ -54,11 +54,12 @@ private:
 
     typedef std::map<std::shared_ptr<CcdImage>, std::unique_ptr<PhotometryMapping>> MapType;
     MapType _myMap;
-    // typedef std::map<VisitIdType, std::unique_ptr<ConstrainedPhotometryMapping>> VisitMapType;
-    // VisitMapType _visitMap;
-    // typedef std::map<CcdIdType, std::unique_ptr<ConstrainedPhotometryMapping>> ChipMapType;
-    // ChipMapType _chipMap;
-};
+
+    typedef std::map<VisitIdType, std::unique_ptr<PhotometryMapping>> VisitMapType;
+    VisitMapType _visitMap;
+    typedef std::map<CcdIdType, std::unique_ptr<PhotometryMapping>> ChipMapType;
+    ChipMapType _chipMap;
+};  // namespace jointcal
 
 }  // namespace jointcal
 }  // namespace lsst

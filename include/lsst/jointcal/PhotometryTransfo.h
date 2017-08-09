@@ -24,10 +24,7 @@ class PhotometryTransfoSpatiallyInvariant;
 /*
  * A photometric transform, defined as a scale factor of the input calibration.
  *
- *     initialCalibFlux (Maggies) * transfo(x,y) -> correctedFlux (Maggies)
- *
- * @todo Eventually will be defined the same as PhotoCalib:
- *     instFlux (ADU) -> flux (maggies)
+ *     inputFlux (ADU or Maggies) * transfo(x,y) -> correctedFlux (Maggies)
  *
  * @seealso lsst::afw::image::PhotoCalib
  */
@@ -36,6 +33,7 @@ public:
     /// Apply the transform to instFlux at (x,y), put result in flux
     virtual double apply(double x, double y, double instFlux) const = 0;
 
+    /// Return the transformed instFlux at (x,y).
     double apply(Point const &in, double instFlux) const { return apply(in.x, in.y, instFlux); }
 
     /// dumps the transfo coefficients to stream.
@@ -74,15 +72,16 @@ public:
      */
     virtual void computeParameterDerivatives(double x, double y, double instFlux,
                                              Eigen::VectorXd &derivatives) const = 0;
+
+    /// Get a copy of the parameters of this model, in the same order as `offsetParams`.
+    virtual Eigen::VectorXd getParameters() const = 0;
 };
 
 /*
- * Photometric offset independent of position.
+ * Photometric offset independent of position, defined as (fluxMag0)^-1.
  *
  * initialCalibFlux (Maggies) * SpatiallyInvariantTransfo -> correctedFlux (Maggies)
  *
- * @todo Eventually to be defined as:
- *     instFlux / value = flux
  */
 class PhotometryTransfoSpatiallyInvariant : public PhotometryTransfo {
 public:
@@ -110,6 +109,13 @@ public:
                                      Eigen::VectorXd &derivatives) const override {
         // the derivative of a spatially constant transfo w.r.t. that value is just the instFlux.
         derivatives[0] = instFlux;
+    }
+
+    /// @copydoc PhotometryTransfo::getParameters
+    Eigen::VectorXd getParameters() const override {
+        Eigen::VectorXd parameters(1);
+        parameters[0] = _value;
+        return parameters;
     }
 
 protected:
@@ -174,6 +180,9 @@ public:
 
     /// Get a copy of the coefficients of the polynomials, as a 2d array (NOTE: degree is [y][x])
     ndarray::Array<double, 2, 2> getCoefficients() { return ndarray::copy(_coefficients); }
+
+    /// @copydoc PhotometryTransfo::getParameters
+    Eigen::VectorXd getParameters() const override;
 
 private:
     afw::geom::AffineTransform _toChebyshevRange;  // maps points from the bbox to [-1,1]x[-1,1]

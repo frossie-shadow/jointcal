@@ -558,7 +558,7 @@ class JointcalTask(pipeBase.CmdLineTask):
 
         return chi2
 
-    def _write_results(self, associations, astrom_model, photom_model, visit_ccd_to_dataRef):
+    def _write_results(self, associations, astrometry_model, photometry_model, visit_ccd_to_dataRef):
         """
         Write the fitted results (photometric and astrometric) to a new 'wcs' dataRef.
 
@@ -566,9 +566,9 @@ class JointcalTask(pipeBase.CmdLineTask):
         ----------
         associations : lsst.jointcal.Associations
             The star/reference star associations to fit.
-        astrom_model : lsst.jointcal.AstrometryModel
+        astrometry_model : lsst.jointcal.AstrometryModel
             The astrometric model that was fit.
-        photom_model : lsst.jointcal.PhotometryModel
+        photometry_model : lsst.jointcal.PhotometryModel
             The photometric model that was fit.
         visit_ccd_to_dataRef : dict of Key: lsst.daf.persistence.ButlerDataRef
             dict of ccdImage identifiers to dataRefs that were fit
@@ -583,17 +583,20 @@ class JointcalTask(pipeBase.CmdLineTask):
             exp = afwImage.ExposureI(0, 0)
             if self.config.doAstrometry:
                 self.log.info("Updating WCS for visit: %d, ccd: %d", visit, ccd)
-                tanSip = astrom_model.produceSipWcs(ccdImage)
+                tanSip = astrometry_model.produceSipWcs(ccdImage)
                 tanWcs = lsst.jointcal.gtransfoToTanWcs(tanSip, ccdImage.imageFrame, False)
                 exp.setWcs(tanWcs)
+                try:
+                    dataRef.put(exp, 'wcs')
+                except pexExceptions.Exception as e:
+                    self.log.fatal('Failed to write updated Wcs: %s', str(e))
+                    raise e
             if self.config.doPhotometry:
-                self.log.info("Updating Calib for visit: %d, ccd: %d", visit, ccd)
-                # start with the original calib saved to the ccdImage
-                fluxMag0 = ccdImage.getPhotoCalib().getInstFluxMag0()
-                fluxMag0Err = ccdImage.getPhotoCalib().getInstFluxMag0Err()
-                exp.getCalib().setFluxMag0(fluxMag0/photom_model.photomFactor(ccdImage), fluxMag0Err)
-            try:
-                dataRef.put(exp, 'wcs')
-            except pexExceptions.Exception as e:
-                self.log.fatal('Failed to write updated Wcs and Calib: %s', str(e))
-                raise e
+                self.log.info("Updating PhotoCalib for visit: %d, ccd: %d", visit, ccd)
+                photoCalib = photometry_model.toPhotoCalib(ccdImage)
+                # exp.getCalib().setFluxMag0(fluxMag0/photometry_model.photomFactor(ccdImage), fluxMag0Err)
+                try:
+                    dataRef.put(photoCalib, 'photoCalib')
+                except pexExceptions.Exception as e:
+                    self.log.fatal('Failed to write updated PhotoCalib: %s', str(e))
+                    raise e

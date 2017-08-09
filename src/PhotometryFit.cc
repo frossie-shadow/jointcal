@@ -18,13 +18,6 @@ namespace {
 LOG_LOGGER _log = LOG_GET("jointcal.PhotometryFit");
 }
 
-namespace {
-/// Compute the residual of one measurement term.
-double computeMeasurementResidual(double photomFactor, lsst::jointcal::MeasuredStar const &measuredStar) {
-    return photomFactor * measuredStar.getFlux() - measuredStar.getFittedStar()->getFlux();
-}
-}  // namespace
-
 namespace lsst {
 namespace jointcal {
 
@@ -237,10 +230,13 @@ void PhotometryFit::saveResultTuples(std::string const &tupleName) const {
     tuple << "#xccd: coordinate in CCD" << std::endl
           << "#yccd: " << std::endl
           << "#mag: rough mag" << std::endl
+          << "#instFlux : measured instrument flux" << std::endl
+          << "#instFluxError : measured instrument flux error" << std::endl
           << "#flux : measured flux" << std::endl
           << "#fluxError : measured flux error" << std::endl
+          << "#transformedFlux:" << std::endl
+          << "#transformedFluxErr:" << std::endl
           << "#fflux : fitted flux" << std::endl
-          << "#phot_factor:" << std::endl
           << "#jd: Julian date of the measurement" << std::endl
           << "#color : " << std::endl
           << "#fsindex: some unique index of the object" << std::endl
@@ -253,25 +249,29 @@ void PhotometryFit::saveResultTuples(std::string const &tupleName) const {
           << "#end" << std::endl;
     const CcdImageList &ccdImageList = _associations->getCcdImageList();
     for (auto const &i : ccdImageList) {
-        const CcdImage &im = *i;
-        const MeasuredStarList &cat = im.getCatalogForFit();
+        const CcdImage &ccdImage = *i;
+        const MeasuredStarList &cat = ccdImage.getCatalogForFit();
         for (auto const &is : cat) {
-            const MeasuredStar &ms = *is;
-            if (!ms.isValid()) continue;
-            double sigma = ms.getFluxErr();
+            const MeasuredStar &measuredStar = *is;
+            if (!measuredStar.isValid()) continue;
+            double sigma = measuredStar.getFluxErr();
 #ifdef FUTURE
-            tweakPhotomMeasurementErrors(inPos, ms, _fluxError);
+            tweakPhotomMeasurementErrors(inPos, measuredStar, _fluxError);
 #endif
-            double photomFactor = _photometryModel->photomFactor(im, ms);
-            double jd = im.getMjd();
-            auto fs = ms.getFittedStar();
-            double residual = ms.getFlux() - photomFactor * fs->getFlux();
+            double flux = _photometryModel->transformFlux(ccdImage, measuredStar, measuredStar.getInstFlux());
+            double fluxErr =
+                    _photometryModel->transformFlux(ccdImage, measuredStar, measuredStar.getInstFluxErr());
+            double jd = ccdImage.getMjd();
+            auto fs = measuredStar.getFittedStar();
+            double residual = flux - fs->getFlux();
             double chi2Val = std::pow(residual / sigma, 2);
-            tuple << ms.x << ' ' << ms.y << ' ' << fs->getMag() << ' ' << ms.getFlux() << ' '
-                  << ms.getFluxErr() << ' ' << fs->getFlux() << ' ' << photomFactor << ' ' << jd << ' '
-                  << fs->color << ' ' << fs->getIndexInMatrix() << ' ' << fs->x << ' ' << fs->y << ' '
-                  << chi2Val << ' ' << fs->getMeasurementCount() << ' ' << im.getCcdId() << ' '
-                  << im.getVisit() << std::endl;
+            tuple << measuredStar.x << ' ' << measuredStar.y << ' ' << fs->getMag() << ' '
+                  << measuredStar.getInstFlux() << ' ' << measuredStar.getInstFluxErr() << ' '
+                  << measuredStar.getInstFlux() << ' ' << measuredStar.getFluxErr() << ' ' << flux << ' '
+                  << fluxErr << ' ' << fs->getFlux() << ' ' << jd << ' ' << fs->color << ' '
+                  << fs->getIndexInMatrix() << ' ' << fs->x << ' ' << fs->y << ' ' << chi2Val << ' '
+                  << fs->getMeasurementCount() << ' ' << ccdImage.getCcdId() << ' ' << ccdImage.getVisit()
+                  << std::endl;
         }  // loop on measurements in image
     }      // loop on images
 }

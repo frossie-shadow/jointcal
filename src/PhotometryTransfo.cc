@@ -113,5 +113,19 @@ void PhotometryTransfoChebyshev::computeParameterDerivatives(double x, double y,
         }
     }
 }
+
+Eigen::VectorXd PhotometryTransfoChebyshev::getParameters() const {
+    Eigen::VectorXd parameters(_nParameters);
+    // NOTE: the indexing in this method and offsetParams must be kept consistent!
+    Eigen::VectorXd::Index k = 0;
+    for (ndarray::Size j = 0; j <= _degree; ++j) {
+        for (ndarray::Size i = 0; i + j <= _degree; ++i, ++k) {
+            parameters[k] = _coefficients[j][i];
+        }
+    }
+
+    return parameters;
+}
+
 }  // namespace jointcal
 }  // namespace lsst

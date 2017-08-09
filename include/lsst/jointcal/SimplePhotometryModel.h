@@ -28,14 +28,7 @@ public:
     SimplePhotometryModel &operator=(SimplePhotometryModel const &) = delete;
     SimplePhotometryModel &operator=(SimplePhotometryModel &&) = delete;
 
-    /**
-     * Assign indices to parameters involved in mappings, starting at firstIndex.
-     *
-     * @param[in]  whatToFit   Ignored.
-     * @param[in]  firstIndex  Index to start assigning at.
-     *
-     * @return     The highest assigned index.
-     */
+    /// @copydoc PhotometryModel::assignIndices
     unsigned assignIndices(std::string const &whatToFit, unsigned firstIndex) override;
 
     /// @copydoc PhotometryModel::offsetParams
@@ -50,6 +43,19 @@ public:
     /// @copydoc PhotometryModel::computeParameterDerivatives
     void computeParameterDerivatives(MeasuredStar const &measuredStar, CcdImage const &ccdImage,
                                      Eigen::VectorXd &derivatives) override;
+
+    /**
+     * @copydoc PhotometryModel::toPhotoCalib
+     *
+     * @note SimplePhotometryModel uses a spatially-invariant transfo, so we can simplify the PhotoCalib.
+     */
+    std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib(CcdImage const &ccdImage) const override {
+        double instFluxMag0 =
+                1.0 / (this->findMapping(ccdImage, "getMapping")->getTransfo()->getParameters()[0]);
+        auto oldPhotoCalib = ccdImage.getPhotoCalib();
+        return std::unique_ptr<afw::image::PhotoCalib>(
+                new afw::image::PhotoCalib(instFluxMag0, oldPhotoCalib->getInstFluxMag0Err()));
+    }
 
 private:
     typedef std::map<CcdImage const *, std::unique_ptr<PhotometryMapping>> MapType;

@@ -42,8 +42,8 @@ void SimplePhotometryModel::offsetParams(Eigen::VectorXd const &delta) {
 double SimplePhotometryModel::transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
                                             double instFlux) const {
     auto mapping = this->findMapping(ccdImage, "transformFlux");
-    return mapping->getTransfo().apply(star, star.getInstFlux());
-}  // namespace jointcal
+    return mapping->transformFlux(star.x, star.y, star.getInstFlux());
+}
 
 void SimplePhotometryModel::getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) {
     auto mapping = this->findMapping(ccdImage, "getMappingIndices");

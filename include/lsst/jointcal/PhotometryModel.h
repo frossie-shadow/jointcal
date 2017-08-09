@@ -2,6 +2,8 @@
 #ifndef LSST_JOINTCAL_PHOTOMETRY_MODEL_H
 #define LSST_JOINTCAL_PHOTOMETRY_MODEL_H
 
+#include "lsst/afw/image/PhotoCalib.h"
+
 #include "lsst/jointcal/CcdImage.h"
 #include "lsst/jointcal/Eigenstuff.h"
 #include "lsst/jointcal/PhotometryMapping.h"
@@ -49,8 +51,6 @@ public:
     virtual double transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
                                  double instFlux) const = 0;
 
-    virtual double photomFactor(CcdImage const &ccdImage, Point const &where) const = 0;
-
     /// Get the mapping associated with ccdImage.
     PhotometryMapping const &getMapping(CcdImage const &ccdImage) const {
         return *(this->findMapping(ccdImage, "getMapping"));
@@ -74,9 +74,12 @@ public:
     virtual void computeParameterDerivatives(MeasuredStar const &measuredStar, CcdImage const &ccdImage,
                                              Eigen::VectorXd &derivatives) = 0;
 
-    // //! number of parameters to be read in indices.size()
-    // virtual void setIndicesAndDerivatives(MeasuredStar const &measuredStar, CcdImage const &ccdImage,
-    //                                       std::vector<unsigned> &indices, Eigen::VectorXd &D) = 0;
+    /**
+     * Return the mapping of ccdImage represented as a PhotoCalib.
+     */
+    virtual std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib(CcdImage const &ccdImage) const {
+        return this->findMapping(ccdImage, "getMapping")->toPhotoCalib();
+    }
 
     virtual ~PhotometryModel(){};
 
