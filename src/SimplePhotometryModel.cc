@@ -16,8 +16,10 @@ namespace jointcal {
 
 SimplePhotometryModel::SimplePhotometryModel(CcdImageList const &ccdImageList) {
     for (auto const &ccdImage : ccdImageList) {
-        _myMap[ccdImage.get()] = std::unique_ptr<PhotometryMapping>(
-                new PhotometryMapping(PhotometryTransfoSpatiallyInvariant()));
+        auto photoCalib = ccdImage->getPhotoCalib();
+        // Use (fluxMag0)^-1 from the PhotoCalib as the default.
+        _myMap[ccdImage.get()] = std::unique_ptr<PhotometryMapping>(new PhotometryMapping(
+                PhotometryTransfoSpatiallyInvariant(1.0 / photoCalib->getInstFluxMag0())));
     }
     LOGLS_INFO(_log, "SimplePhotometryModel got " << _myMap.size() << " ccdImage mappings.");
 }
@@ -42,7 +44,7 @@ void SimplePhotometryModel::offsetParams(Eigen::VectorXd const &delta) {
 double SimplePhotometryModel::transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
                                             double instFlux) const {
     auto mapping = this->findMapping(ccdImage, "transformFlux");
-    return mapping->transformFlux(star.x, star.y, star.getInstFlux());
+    return mapping->transformFlux(star.x, star.y, instFlux);
 }
 
 void SimplePhotometryModel::getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) {

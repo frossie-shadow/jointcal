@@ -59,8 +59,8 @@ void PhotometryFit::leastSquareDerivativesMeasurement(CcdImage const &ccdImage, 
                 _photometryModel->transformFlux(ccdImage, *measuredStar, measuredStar->getInstFlux()) -
                 measuredStar->getFittedStar()->getFlux();
 
-        double inverseSigma =
-                1.0 / _photometryModel->transformFlux(ccdImage, *measuredStar, measuredStar->getFluxErr());
+        double inverseSigma = 1.0 / _photometryModel->transformFlux(ccdImage, *measuredStar,
+                                                                    measuredStar->getInstFluxErr());
         double W = std::pow(inverseSigma, 2);
 
         if (_fittingModel) {
