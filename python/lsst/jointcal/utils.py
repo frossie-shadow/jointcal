@@ -98,7 +98,7 @@ class JointcalStatistics(object):
             # will change if the data_refs are ordered differently.
             # All the more reason to use a proper n-way matcher here. See: DM-8664
             refcat = catalogs[0]
-            refcalib = photoCalibs[0]
+            refcalib = photoCalibs[0] if photoCalibs != [] else None
             dist_rel, flux_rel, ref_flux_rel, source_rel = self._make_match_dict(refcat,
                                                                                  catalogs[1:],
                                                                                  photoCalibs[1:],
@@ -325,11 +325,12 @@ class JointcalStatistics(object):
         def get_fluxes(photoCalib, match):
             """Return (flux, ref_flux) or None if either is invalid."""
             # NOTE: Protect against negative fluxes: ignore this match if we find one.
+            maggiesToJansky = 3631
             flux = match[1]['slot_CalibFlux_flux']
             if flux < 0:
                 return None
             else:
-                flux = photoCalib.instFluxToMaggies(match[1], "slot_CalibFlux").value
+                flux = maggiesToJansky * photoCalib.instFluxToMaggies(match[1], "slot_CalibFlux").value
 
             # NOTE: Have to protect against negative reference fluxes too.
             if 'slot' in ref_flux_key:
@@ -337,7 +338,7 @@ class JointcalStatistics(object):
                 if ref_flux < 0:
                     return None
                 else:
-                    ref_flux = photoCalib.instFluxToMaggies(match[0], ref_flux_key).value
+                    ref_flux = maggiesToJansky * photoCalib.instFluxToMaggies(match[0], ref_flux_key).value
             else:
                 # a.net fluxes are already in Janskys.
                 ref_flux = match[0][ref_flux_key.format(filt)]
