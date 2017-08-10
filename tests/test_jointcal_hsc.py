@@ -69,7 +69,7 @@ class JointcalTestHSC(jointcalTestBase.JointcalTestBase, lsst.utils.tests.TestCa
                    'selectedPhotometryCcdImageList': 6,
                    'astrometryFinalChi2': 691.12,
                    'astrometryFinalNdof': 1858,
-                   'photometryFinalChi2': 1525.03,
+                   'photometryFinalChi2': 1553.2,
                    'photometryFinalNdof': 965
                    }
         self._testJointcalTask(2, dist_rms_relative, self.dist_rms_absolute, pa1, metrics=metrics)
@@ -113,7 +113,7 @@ class JointcalTestHSC(jointcalTestBase.JointcalTestBase, lsst.utils.tests.TestCa
                    'associatedPhotometryFittedStars': 1151,
                    'selectedPhotometryFittedStars': 770,
                    'selectedPhotometryCcdImageList': 6,
-                   'photometryFinalChi2': 1525.03,
+                   'photometryFinalChi2': 1553.2,
                    'photometryFinalNdof': 965
                    }
 
@@ -194,7 +194,7 @@ class JointcalTestHSC(jointcalTestBase.JointcalTestBase, lsst.utils.tests.TestCa
                    'selectedPhotometryCcdImageList': 6,
                    'astrometryFinalChi2': 435.01995,
                    'astrometryFinalNdof': 1412,
-                   'photometryFinalChi2': 1525.03,
+                   'photometryFinalChi2': 1553.2,
                    'photometryFinalNdof': 965
                    }
         # NOTE: The astrometry/photometry tests are computed using the a.net SDSS refcat,
@@ -264,6 +264,7 @@ class JointcalTestHSC(jointcalTestBase.JointcalTestBase, lsst.utils.tests.TestCa
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):
     pass
+
 
 if __name__ == "__main__":
     lsst.utils.tests.init()
