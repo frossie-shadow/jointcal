@@ -13,12 +13,64 @@ LOG_LOGGER _log = LOG_GET("jointcal.ConstrainedPhotometryModel");
 namespace lsst {
 namespace jointcal {
 
+explicit ConstrainedPhotometryModel::ConstrainedPhotometryModel(CcdImageList const &ccdImageList) {
+    // First initialize all visit and ccd transfos, before we make the ccdImage mappings.
+    for (auto const &ccdImage : ccdImageList) {
+        auto visit = ccdImage->getVisit();
+        auto chip = ccdImage->getCcdId();
+        auto visitPair = _visitMap.find(visit);
+        // If the visit is not in the map, add it, otherwise continue.
+        if (visitPair == _visitMap.end()) {
+            // if (_visitMap.size() == 0) {
+            //     _visitMap[visit] =
+            //             std::unique_ptr<SimpleGtransfoMapping>(new
+            //             SimpleGtransfoMapping(GtransfoIdentity()));
+            // } else {
+            _visitMap[visit] =
+                    std::unique_ptr<PhotometryMapping>(new PhotometryMapping(PhotometryTransfoChebyshev));
+            // }
+        }
+        auto chipPair = _visitMap.find(visit);
+        // If the chip is not in the map, add it, otherwise continue.
+        if (chipPair == _chipMap.end()) {
+            auto photoCalib = ccdImage->getPhotoCalib();
+            // Use (fluxMag0)^-1 from the PhotoCalib as the default.
+            _visitMap[visit] = std::unique_ptr<PhotometryMapping>(new PhotometryMapping(
+                    PhotometryTransfoSpatiallyInvariant(1.0 / photoCalib->getInstFluxMag0())));
+        }
+    }
+    // Now create the ccdImage mappings, which are combinations of the chip/visit mappings above.
+    for (auto const &ccdImage : ccdImageList) {
+        auto visit = ccdImage->getVisit();
+        auto chip = ccdImage->getCcdId();
+        _myMap[ccdImage] = std::unique_ptr<TwoTransfoPhotometryMapping>(
+                new TwoTransfoPhotometryMapping(_chipMap[chip].get(), _visitMap[visit].get()));
+    }
+    LOGLS_INFO(_log, "Constructor got " << _chipMap.size() << " chip mappings and " << _visitMap.size()
+                                        << " visit mappings.");
+}
+
 unsigned ConstrainedPhotometryModel::assignIndices(std::string const &whatToFit, unsigned firstIndex) {
-    return 0;
+    // TODO: currently ignoring whatToFit. Should we even care? Maybe it helps to initialize with fitting just
+    // visits or chips first before fitting both simultaneously?
+    unsigned index = firstIndex;
+    for (auto &chip : _chipMap) {
+        chip.second->setIndex(index);
+        index += chip.second->getNpar();
+    }
+    for (auto &visit : _visitMap) {
+        visit.second->setIndex(index);
+        index += visit.second->getNpar();
+    }
+    return index;
 }
 
 void ConstrainedPhotometryModel::offsetParams(Eigen::VectorXd const &delta) {
-    for (auto &i : _myMap) {
+    for (auto &i : _chipMap) {
+        auto mapping = i.second.get();
+        mapping->offsetParams(delta.segment(mapping->getIndex(), mapping->getNpar()));
+    }
+    for (auto &i : _visitMap) {
         auto mapping = i.second.get();
         mapping->offsetParams(delta.segment(mapping->getIndex(), mapping->getNpar()));
     }
@@ -26,14 +78,29 @@ void ConstrainedPhotometryModel::offsetParams(Eigen::VectorXd const &delta) {
 
 double ConstrainedPhotometryModel::transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
                                                  double instFlux) const {
-    return 0;
+    auto mapping = this->findMapping(ccdImage, "transformFlux");
+    return mapping->transformFlux(star.x, star.y, instFlux);
 }
 
 void ConstrainedPhotometryModel::getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) {
+    auto mapping = this->findMapping(ccdImage, "getMappingIndices");
+    if (indices.size() < mapping->getNpar()) indices.resize(mapping->getNpar());
+    indices[0] = mapping->getIndex();
+    // TODO: I think I need a for loop here, from the above value to that +mapping->getNpar()?
 }
 
 void ConstrainedPhotometryModel::computeParameterDerivatives(MeasuredStar const &measuredStar,
                                                              CcdImage const &ccdImage,
                                                              Eigen::VectorXd &derivatives) {}
+
+PhotometryMapping *ConstrainedPhotometryModel::findMapping(CcdImage const &ccdImage, std::string name) const {
+    auto i = _myMap.find(&ccdImage);
+    if (i == _myMap.end())
+        throw LSST_EXCEPT(
+                pex::exceptions::InvalidParameterError,
+                "ConstrainedPhotometryModel::" + name + ", cannot find CcdImage " + ccdImage.getName());
+    return i->second.get();
+}
+
 }  // namespace jointcal
 }  // namespace lsst

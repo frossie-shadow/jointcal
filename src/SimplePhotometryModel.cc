@@ -65,7 +65,7 @@ PhotometryMapping *SimplePhotometryModel::findMapping(CcdImage const &ccdImage, 
     auto i = _myMap.find(&ccdImage);
     if (i == _myMap.end())
         throw LSST_EXCEPT(pex::exceptions::InvalidParameterError,
-                          "SimplePolyModel::" + name + ", cannot find CcdImage " + ccdImage.getName());
+                          "SimplePhotometryModel::" + name + ", cannot find CcdImage " + ccdImage.getName());
     return i->second.get();
 }
 
