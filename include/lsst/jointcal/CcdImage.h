@@ -23,6 +23,7 @@ typedef std::list<std::shared_ptr<CcdImage>> CcdImageList;
 
 typedef int VisitIdType;
 typedef int CcdIdType;
+typedef std::pair<VisitIdType, CcdIdType> CcdImageKey;
 
 /**
  * Handler of an actual image from a single CCD.
@@ -129,10 +130,12 @@ public:
     Gtransfo const *getSky2TP() const { return _sky2TP.get(); }
 
     //! returns ccd ID
-    int getCcdId() const { return _ccdId; }
+    CcdIdType getCcdId() const { return _ccdId; }
 
     //! returns visit ID
     VisitIdType getVisit() const { return _visit; }
+
+    CcdImageKey getHashKey() const { return CcdImageKey(_visit, _ccdId); }
 
     //!  Airmass
     double getAirMass() const { return _airMass; }
@@ -177,5 +180,15 @@ public:
 };
 }  // namespace jointcal
 }  // namespace lsst
+
+// Add our preferred hash of CcdImageKey to the std:: namespace, so it's always available "for free".
+namespace std {
+template <>
+struct hash<lsst::jointcal::CcdImageKey> {
+    size_t operator()(lsst::jointcal::CcdImageKey const &ccdImage) const {
+        return hash<size_t>()((size_t)(ccdImage.first) | ((size_t)(ccdImage.second) << 32));
+    }
+};
+}  // namespace std
 
 #endif  // LSST_JOINTCAL_CCD_IMAGE_H

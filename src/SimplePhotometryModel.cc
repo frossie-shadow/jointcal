@@ -15,12 +15,14 @@ namespace lsst {
 namespace jointcal {
 
 SimplePhotometryModel::SimplePhotometryModel(CcdImageList const &ccdImageList) {
+    _myMap.reserve(ccdImageList.size());
     for (auto const &ccdImage : ccdImageList) {
         auto photoCalib = ccdImage->getPhotoCalib();
         // Use (fluxMag0)^-1 from the PhotoCalib as the default.
         auto transfo =
                 std::make_shared<PhotometryTransfoSpatiallyInvariant>(1.0 / photoCalib->getInstFluxMag0());
-        _myMap[ccdImage] = std::unique_ptr<PhotometryMapping>(new PhotometryMapping(transfo));
+        _myMap.emplace(ccdImage->getHashKey(),
+                       std::unique_ptr<PhotometryMapping>(new PhotometryMapping(transfo)));
     }
     LOGLS_INFO(_log, "SimplePhotometryModel got " << _myMap.size() << " ccdImage mappings.");
 }
@@ -45,7 +47,7 @@ void SimplePhotometryModel::offsetParams(Eigen::VectorXd const &delta) {
 double SimplePhotometryModel::transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
                                             double instFlux) const {
     auto mapping = this->findMapping(ccdImage, "transformFlux");
-    return mapping->transformFlux(star.x, star.y, instFlux);
+    return mapping->transformFlux(star, instFlux);
 }
 
 void SimplePhotometryModel::getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) {
@@ -58,8 +60,7 @@ void SimplePhotometryModel::computeParameterDerivatives(MeasuredStar const &meas
                                                         CcdImage const &ccdImage,
                                                         Eigen::VectorXd &derivatives) {
     auto mapping = this->findMapping(ccdImage, "computeParameterDerivatives");
-    mapping->computeParameterDerivatives(measuredStar.x, measuredStar.y, measuredStar.getInstFlux(),
-                                         derivatives);
+    mapping->computeParameterDerivatives(measuredStar, measuredStar.getInstFlux(), derivatives);
 }
 
 std::shared_ptr<afw::image::PhotoCalib> SimplePhotometryModel::toPhotoCalib(CcdImage const &ccdImage) const {
@@ -69,8 +70,8 @@ std::shared_ptr<afw::image::PhotoCalib> SimplePhotometryModel::toPhotoCalib(CcdI
             new afw::image::PhotoCalib(instFluxMag0, oldPhotoCalib->getInstFluxMag0Err()));
 }
 
-PhotometryMapping *SimplePhotometryModel::findMapping(CcdImage const &ccdImage, std::string name) const {
-    auto i = _myMap.find(&ccdImage);
+PhotometryMappingBase *SimplePhotometryModel::findMapping(CcdImage const &ccdImage, std::string name) const {
+    auto i = _myMap.find(ccdImage.getHashKey());
     if (i == _myMap.end())
         throw LSST_EXCEPT(pex::exceptions::InvalidParameterError,
                           "SimplePhotometryModel::" + name + ", cannot find CcdImage " + ccdImage.getName());

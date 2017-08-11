@@ -41,11 +41,13 @@ ConstrainedPhotometryModel::ConstrainedPhotometryModel(CcdImageList const &ccdIm
         }
     }
     // Now create the ccdImage mappings, which are combinations of the chip/visit mappings above.
+    _myMap.reserve(ccdImageList.size());  // we know how big it will be, so pre-allocate space.
     for (auto const &ccdImage : ccdImageList) {
         auto visit = ccdImage->getVisit();
         auto chip = ccdImage->getCcdId();
-        _myMap[*ccdImage] = std::unique_ptr<ChipVisitPhotometryMapping>(
-                new ChipVisitPhotometryMapping(_chipMap[chip]->getTransfo(), _visitMap[visit]->getTransfo()));
+        _myMap.emplace(ccdImage->getHashKey(),
+                       std::unique_ptr<ChipVisitPhotometryMapping>(new ChipVisitPhotometryMapping(
+                               _chipMap[chip]->getTransfo(), _visitMap[visit]->getTransfo())));
     }
     LOGLS_INFO(_log, "Constructor got " << _chipMap.size() << " chip mappings and " << _visitMap.size()
                                         << " visit mappings.");
@@ -77,10 +79,10 @@ void ConstrainedPhotometryModel::offsetParams(Eigen::VectorXd const &delta) {
     }
 }
 
-double ConstrainedPhotometryModel::transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
+double ConstrainedPhotometryModel::transformFlux(CcdImage const &ccdImage, MeasuredStar const &measuredStar,
                                                  double instFlux) const {
     auto mapping = this->findMapping(ccdImage, "transformFlux");
-    return mapping->transformFlux(star.x, star.y, instFlux);
+    return mapping->transformFlux(measuredStar, instFlux);
 }
 
 void ConstrainedPhotometryModel::getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) {
@@ -96,7 +98,7 @@ void ConstrainedPhotometryModel::computeParameterDerivatives(MeasuredStar const 
 
 PhotometryMappingBase *ConstrainedPhotometryModel::findMapping(CcdImage const &ccdImage,
                                                                std::string name) const {
-    auto i = _myMap.find(&ccdImage);
+    auto i = _myMap.find(ccdImage.getHashKey());
     if (i == _myMap.end())
         throw LSST_EXCEPT(
                 pex::exceptions::InvalidParameterError,

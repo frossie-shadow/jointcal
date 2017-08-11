@@ -52,7 +52,7 @@ public:
     std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib(CcdImage const &ccdImage) const override;
 
 private:
-    typedef std::map<CcdImage, std::unique_ptr<PhotometryMapping>> MapType;
+    typedef std::unordered_map<CcdImageKey, std::unique_ptr<PhotometryMapping>> MapType;
     MapType _myMap;
 
     /// Return the mapping associated with this ccdImage. name is a descriptor for error messages.

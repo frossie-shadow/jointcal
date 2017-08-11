@@ -42,13 +42,13 @@ public:
     /**
      * Return the on-sky transformed flux for measuredStar on ccdImage.
      *
-     * @param[in]  ccdImage  The ccdImage where measuredStar resides.
-     * @param      star      The measured star position to compute the transform at.
-     * @param[in]  instFlux  The instrument flux to transform.
+     * @param[in]  ccdImage     The ccdImage where measuredStar resides.
+     * @param      measuredStar The measured star position to compute the transform at.
+     * @param[in]  instFlux     The instrument flux to transform.
      *
      * @return     The on-sky flux transformed from instFlux at measuredStar's position.
      */
-    virtual double transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
+    virtual double transformFlux(CcdImage const &ccdImage, MeasuredStar const &measuredStar,
                                  double instFlux) const = 0;
 
     /**

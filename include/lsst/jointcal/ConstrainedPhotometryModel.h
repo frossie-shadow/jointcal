@@ -45,7 +45,7 @@ public:
 private:
     PhotometryMappingBase *findMapping(CcdImage const &ccdImage, std::string name) const override;
 
-    typedef std::map<CcdImage, std::unique_ptr<ChipVisitPhotometryMapping>> MapType;
+    typedef std::unordered_map<CcdImageKey, std::unique_ptr<ChipVisitPhotometryMapping>> MapType;
     MapType _myMap;
 
     typedef std::map<VisitIdType, std::shared_ptr<PhotometryMapping>> VisitMapType;

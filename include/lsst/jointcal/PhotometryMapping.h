@@ -87,7 +87,7 @@ protected:
 /**
  * A single-transfo mapping.
  */
-class PhotometryMapping : PhotometryMappingBase {
+class PhotometryMapping : public PhotometryMappingBase {
 public:
     explicit PhotometryMapping(std::shared_ptr<PhotometryTransfo> transfo)
             : PhotometryMappingBase(), _transfo(std::move(transfo)) {}
