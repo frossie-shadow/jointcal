@@ -13,12 +13,21 @@ LOG_LOGGER _log = LOG_GET("jointcal.ConstrainedPhotometryModel");
 namespace lsst {
 namespace jointcal {
 
-explicit ConstrainedPhotometryModel::ConstrainedPhotometryModel(CcdImageList const &ccdImageList) {
+ConstrainedPhotometryModel::ConstrainedPhotometryModel(CcdImageList const &ccdImageList, int degree) {
     // First initialize all visit and ccd transfos, before we make the ccdImage mappings.
     for (auto const &ccdImage : ccdImageList) {
         auto visit = ccdImage->getVisit();
         auto chip = ccdImage->getCcdId();
         auto visitPair = _visitMap.find(visit);
+        auto chipPair = _chipMap.find(chip);
+        // If the chip is not in the map, add it, otherwise continue.
+        if (chipPair == _chipMap.end()) {
+            auto photoCalib = ccdImage->getPhotoCalib();
+            // Use (fluxMag0)^-1 from the PhotoCalib as the default.
+            auto transfo = std::make_shared<PhotometryTransfoSpatiallyInvariant>(
+                    1.0 / photoCalib->getInstFluxMag0());
+            _chipMap[chip] = std::unique_ptr<PhotometryMapping>(new PhotometryMapping(transfo));
+        }
         // If the visit is not in the map, add it, otherwise continue.
         if (visitPair == _visitMap.end()) {
             // if (_visitMap.size() == 0) {
@@ -26,25 +35,17 @@ explicit ConstrainedPhotometryModel::ConstrainedPhotometryModel(CcdImageList con
             //             std::unique_ptr<SimpleGtransfoMapping>(new
             //             SimpleGtransfoMapping(GtransfoIdentity()));
             // } else {
-            _visitMap[visit] =
-                    std::unique_ptr<PhotometryMapping>(new PhotometryMapping(PhotometryTransfoChebyshev));
+            auto transfo = std::make_shared<PhotometryTransfoChebyshev>(degree);
+            _visitMap[visit] = std::unique_ptr<PhotometryMapping>(new PhotometryMapping(transfo));
             // }
-        }
-        auto chipPair = _visitMap.find(visit);
-        // If the chip is not in the map, add it, otherwise continue.
-        if (chipPair == _chipMap.end()) {
-            auto photoCalib = ccdImage->getPhotoCalib();
-            // Use (fluxMag0)^-1 from the PhotoCalib as the default.
-            _visitMap[visit] = std::unique_ptr<PhotometryMapping>(new PhotometryMapping(
-                    PhotometryTransfoSpatiallyInvariant(1.0 / photoCalib->getInstFluxMag0())));
         }
     }
     // Now create the ccdImage mappings, which are combinations of the chip/visit mappings above.
     for (auto const &ccdImage : ccdImageList) {
         auto visit = ccdImage->getVisit();
         auto chip = ccdImage->getCcdId();
-        _myMap[ccdImage] = std::unique_ptr<TwoTransfoPhotometryMapping>(
-                new TwoTransfoPhotometryMapping(_chipMap[chip].get(), _visitMap[visit].get()));
+        _myMap[*ccdImage] = std::unique_ptr<ChipVisitPhotometryMapping>(
+                new ChipVisitPhotometryMapping(_chipMap[chip]->getTransfo(), _visitMap[visit]->getTransfo()));
     }
     LOGLS_INFO(_log, "Constructor got " << _chipMap.size() << " chip mappings and " << _visitMap.size()
                                         << " visit mappings.");
@@ -93,7 +94,8 @@ void ConstrainedPhotometryModel::computeParameterDerivatives(MeasuredStar const 
                                                              CcdImage const &ccdImage,
                                                              Eigen::VectorXd &derivatives) {}
 
-PhotometryMapping *ConstrainedPhotometryModel::findMapping(CcdImage const &ccdImage, std::string name) const {
+PhotometryMappingBase *ConstrainedPhotometryModel::findMapping(CcdImage const &ccdImage,
+                                                               std::string name) const {
     auto i = _myMap.find(&ccdImage);
     if (i == _myMap.end())
         throw LSST_EXCEPT(

@@ -51,11 +51,6 @@ public:
     virtual double transformFlux(CcdImage const &ccdImage, MeasuredStar const &star,
                                  double instFlux) const = 0;
 
-    /// Get the mapping associated with ccdImage.
-    PhotometryMapping const &getMapping(CcdImage const &ccdImage) const {
-        return *(this->findMapping(ccdImage, "getMapping"));
-    }
-
     /**
      * Get how this set of parameters (of length Npar()) map into the "grand" fit.
      *
@@ -77,15 +72,24 @@ public:
     /**
      * Return the mapping of ccdImage represented as a PhotoCalib.
      */
-    virtual std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib(CcdImage const &ccdImage) const {
-        return this->findMapping(ccdImage, "getMapping")->toPhotoCalib();
+    virtual std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib(CcdImage const &ccdImage) const = 0;
+    // {
+    //     return this->findMapping(ccdImage, "getMapping")->toPhotoCalib();
+    // }
+
+    /// Return the number of parameters in the mapping of CcdImage
+    unsigned getNpar(CcdImage const &ccdImage) const {
+        return this->findMapping(ccdImage, "getNpar")->getNpar();
     }
 
-    virtual ~PhotometryModel(){};
+    /// Get the mapping associated with ccdImage.
+    PhotometryMappingBase const &getMapping(CcdImage const &ccdImage) const {
+        return *(this->findMapping(ccdImage, "getMapping"));
+    }
 
 protected:
     /// Return a pointer to the mapping associated with this ccdImage. name is for describing error messages.
-    virtual PhotometryMapping *findMapping(CcdImage const &ccdImage, std::string name) const = 0;
+    virtual PhotometryMappingBase *findMapping(CcdImage const &ccdImage, std::string name) const = 0;
 };
 }  // namespace jointcal
 }  // namespace lsst

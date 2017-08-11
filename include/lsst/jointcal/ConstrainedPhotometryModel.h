@@ -13,7 +13,7 @@ namespace jointcal {
 
 class ConstrainedPhotometryModel : public PhotometryModel {
 public:
-    explicit ConstrainedPhotometryModel(CcdImageList const &ccdImageList, int degree);
+    explicit ConstrainedPhotometryModel(CcdImageList const &ccdImageList, int degree = 3);
 
     /// No copy or move: there is only ever one instance of a given model (i.e. per ccd+visit)
     ConstrainedPhotometryModel(ConstrainedPhotometryModel const &) = delete;
@@ -37,15 +37,20 @@ public:
     void computeParameterDerivatives(MeasuredStar const &measuredStar, CcdImage const &ccdImage,
                                      Eigen::VectorXd &derivatives) override;
 
-private:
-    PhotometryMapping *findMapping(CcdImage const &ccdImage, std::string name) const override;
+    /// @copydoc PhotometryModel::toPhotoCalib
+    std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib(CcdImage const &ccdImage) const override {
+        return nullptr;
+    }
 
-    typedef std::map<std::shared_ptr<CcdImage>, std::unique_ptr<TwoTransfoPhotometryMapping>> MapType;
+private:
+    PhotometryMappingBase *findMapping(CcdImage const &ccdImage, std::string name) const override;
+
+    typedef std::map<CcdImage, std::unique_ptr<ChipVisitPhotometryMapping>> MapType;
     MapType _myMap;
 
-    typedef std::map<VisitIdType, std::unique_ptr<PhotometryMapping>> VisitMapType;
+    typedef std::map<VisitIdType, std::shared_ptr<PhotometryMapping>> VisitMapType;
     VisitMapType _visitMap;
-    typedef std::map<CcdIdType, std::unique_ptr<PhotometryMapping>> ChipMapType;
+    typedef std::map<CcdIdType, std::shared_ptr<PhotometryMapping>> ChipMapType;
     ChipMapType _chipMap;
 };
 

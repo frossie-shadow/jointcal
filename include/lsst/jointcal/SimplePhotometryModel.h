@@ -49,20 +49,14 @@ public:
      *
      * @note SimplePhotometryModel uses a spatially-invariant transfo, so we can simplify the PhotoCalib.
      */
-    std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib(CcdImage const &ccdImage) const override {
-        double instFluxMag0 =
-                1.0 / (this->findMapping(ccdImage, "getMapping")->getTransfo()->getParameters()[0]);
-        auto oldPhotoCalib = ccdImage.getPhotoCalib();
-        return std::unique_ptr<afw::image::PhotoCalib>(
-                new afw::image::PhotoCalib(instFluxMag0, oldPhotoCalib->getInstFluxMag0Err()));
-    }
+    std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib(CcdImage const &ccdImage) const override;
 
 private:
-    typedef std::map<CcdImage const *, std::unique_ptr<PhotometryMapping>> MapType;
+    typedef std::map<CcdImage, std::unique_ptr<PhotometryMapping>> MapType;
     MapType _myMap;
 
     /// Return the mapping associated with this ccdImage. name is a descriptor for error messages.
-    PhotometryMapping *findMapping(CcdImage const &ccdImage, std::string name) const override;
+    PhotometryMappingBase *findMapping(CcdImage const &ccdImage, std::string name) const override;
 };
 
 }  // namespace jointcal

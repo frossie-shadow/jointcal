@@ -152,7 +152,7 @@ public:
      *
      * @param[in]  degree  The maximum degree in (x*y).
      */
-    PhotometryTransfoChebyshev(size_t degree, afw::geom::Box2I const &bbox);
+    PhotometryTransfoChebyshev(size_t degree, afw::geom::Box2I const &bbox = afw::geom::Box2I());
 
     /// @copydoc PhotometryTransfo::apply
     double apply(double x, double y, double instFlux) const override;

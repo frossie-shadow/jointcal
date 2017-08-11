@@ -34,9 +34,7 @@ void PhotometryFit::leastSquareDerivativesMeasurement(CcdImage const &ccdImage, 
        Ccd should match the one(s) in the list. */
     if (measuredStarList) assert(&(measuredStarList->front()->getCcdImage()) == &ccdImage);
 
-    auto const &mapping = _photometryModel->getMapping(ccdImage);
-
-    unsigned nparModel = (_fittingModel) ? mapping.getNpar() : 0;
+    unsigned nparModel = (_fittingModel) ? _photometryModel->getNpar(ccdImage) : 0;
     unsigned nparFlux = (_fittingFluxes) ? 1 : 0;
     unsigned nparTotal = nparModel + nparFlux;
     std::vector<unsigned> indices(nparModel, -1);

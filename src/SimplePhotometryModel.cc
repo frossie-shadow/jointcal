@@ -18,8 +18,9 @@ SimplePhotometryModel::SimplePhotometryModel(CcdImageList const &ccdImageList) {
     for (auto const &ccdImage : ccdImageList) {
         auto photoCalib = ccdImage->getPhotoCalib();
         // Use (fluxMag0)^-1 from the PhotoCalib as the default.
-        _myMap[ccdImage.get()] = std::unique_ptr<PhotometryMapping>(new PhotometryMapping(
-                PhotometryTransfoSpatiallyInvariant(1.0 / photoCalib->getInstFluxMag0())));
+        auto transfo =
+                std::make_shared<PhotometryTransfoSpatiallyInvariant>(1.0 / photoCalib->getInstFluxMag0());
+        _myMap[ccdImage] = std::unique_ptr<PhotometryMapping>(new PhotometryMapping(transfo));
     }
     LOGLS_INFO(_log, "SimplePhotometryModel got " << _myMap.size() << " ccdImage mappings.");
 }
@@ -59,6 +60,13 @@ void SimplePhotometryModel::computeParameterDerivatives(MeasuredStar const &meas
     auto mapping = this->findMapping(ccdImage, "computeParameterDerivatives");
     mapping->computeParameterDerivatives(measuredStar.x, measuredStar.y, measuredStar.getInstFlux(),
                                          derivatives);
+}
+
+std::shared_ptr<afw::image::PhotoCalib> SimplePhotometryModel::toPhotoCalib(CcdImage const &ccdImage) const {
+    double instFluxMag0 = 1.0 / (this->findMapping(ccdImage, "getMapping")->getParameters()[0]);
+    auto oldPhotoCalib = ccdImage.getPhotoCalib();
+    return std::unique_ptr<afw::image::PhotoCalib>(
+            new afw::image::PhotoCalib(instFluxMag0, oldPhotoCalib->getInstFluxMag0Err()));
 }
 
 PhotometryMapping *SimplePhotometryModel::findMapping(CcdImage const &ccdImage, std::string name) const {
