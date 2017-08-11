@@ -312,6 +312,9 @@ class JointcalStatistics(object):
             dict of sourceID: list(each SourceRecord that was position-matched
             to this sourceID)
         """
+        # If we have no photoCalibs, make it the same length as the others for zipping.
+        if photoCalibs == []:
+            photoCalibs = [[]]*len(visit_catalogs)
 
         distances = collections.defaultdict(list)
         fluxes = collections.defaultdict(list)
