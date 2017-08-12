@@ -71,7 +71,7 @@ public:
      * @param[out] derivatives  The computed derivatives, in the same order as the deltas in offsetParams.
      */
     virtual void computeParameterDerivatives(double x, double y, double instFlux,
-                                             Eigen::VectorXd &derivatives) const = 0;
+                                             Eigen::Ref<Eigen::VectorXd> derivatives) const = 0;
 
     /// Get a copy of the parameters of this model, in the same order as `offsetParams`.
     virtual Eigen::VectorXd getParameters() const = 0;
@@ -106,7 +106,7 @@ public:
 
     /// @copydoc PhotometryTransfo::computeParameterDerivatives
     void computeParameterDerivatives(double x, double y, double instFlux,
-                                     Eigen::VectorXd &derivatives) const override {
+                                     Eigen::Ref<Eigen::VectorXd> derivatives) const override {
         // the derivative of a spatially constant transfo w.r.t. that value is just the instFlux.
         derivatives[0] = instFlux;
     }
@@ -158,9 +158,7 @@ public:
     double apply(double x, double y, double instFlux) const override;
 
     /// @copydoc PhotometryTransfo::dump
-    void dump(std::ostream &stream = std::cout) const override {
-        stream << "PhotometryTransfoChebyshev (" << _coefficients.getShape() << " coefficients in y,x)";
-    }
+    void dump(std::ostream &stream = std::cout) const override { stream << _coefficients; }
 
     /// @copydoc PhotometryTransfo::getNpar
     int getNpar() const override { return _nParameters; }
@@ -176,7 +174,7 @@ public:
 
     /// @copydoc PhotometryTransfo::computeParameterDerivatives
     void computeParameterDerivatives(double x, double y, double instFlux,
-                                     Eigen::VectorXd &derivatives) const override;
+                                     Eigen::Ref<Eigen::VectorXd> derivatives) const override;
 
     /// Get a copy of the coefficients of the polynomials, as a 2d array (NOTE: degree is [y][x])
     ndarray::Array<double, 2, 2> getCoefficients() { return ndarray::copy(_coefficients); }

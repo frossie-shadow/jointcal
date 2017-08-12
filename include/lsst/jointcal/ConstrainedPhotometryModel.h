@@ -42,6 +42,9 @@ public:
         return nullptr;
     }
 
+    /// @copydoc PhotometryModel::dump
+    void dump(std::ostream &stream = std::cout) const override;
+
 private:
     PhotometryMappingBase *findMapping(CcdImage const &ccdImage, std::string name) const override;
 

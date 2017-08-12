@@ -70,6 +70,12 @@ std::shared_ptr<afw::image::PhotoCalib> SimplePhotometryModel::toPhotoCalib(CcdI
             new afw::image::PhotoCalib(instFluxMag0, oldPhotoCalib->getInstFluxMag0Err()));
 }
 
+void SimplePhotometryModel::dump(std::ostream &stream) const {
+    for (auto &i : _myMap) {
+        i.second->dump(stream);
+    }
+}
+
 PhotometryMappingBase *SimplePhotometryModel::findMapping(CcdImage const &ccdImage, std::string name) const {
     auto i = _myMap.find(ccdImage.getHashKey());
     if (i == _myMap.end())

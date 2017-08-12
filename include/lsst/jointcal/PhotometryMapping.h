@@ -50,7 +50,7 @@ public:
      * @param[out] derivatives  The computed derivatives, in the same order as the deltas in offsetParams.
      */
     virtual void computeParameterDerivatives(MeasuredStar const &measuredStar, double instFlux,
-                                             Eigen::VectorXd &derivatives) const = 0;
+                                             Eigen::Ref<Eigen::VectorXd> derivatives) const = 0;
 
     /**
      * Offset the transfo parameters by delta.
@@ -62,22 +62,20 @@ public:
 
     virtual Eigen::VectorXd getParameters() = 0;
 
+    /**
+     * Gets how this set of parameters (of length getNpar()) map into the "grand" fit.
+     * Expects that indices has enough space reserved.
+     */
+    virtual void getMappingIndices(std::vector<unsigned> &indices) const = 0;
+
+    /// Dump the contents of the transfos, for debugging.
+    virtual void dump(std::ostream &stream = std::cout) const = 0;
+
     /// Get the index of this mapping in the grand fit.
     unsigned getIndex() { return index; }
 
     /// Set the index of this mapping in the grand fit.
     void setIndex(unsigned i) { index = i; }
-
-    /*
-     * Sets how this set of parameters (of length getNpar()) map into the "grand" fit.
-     * Expects that indices has enough space reserved.
-     */
-    void setMappingIndices(std::vector<unsigned> &indices) const {
-        indices.reserve(getNpar());
-        for (unsigned k = 0; k < getNpar(); ++k) {
-            indices[k] = index + k;
-        }
-    }
 
 protected:
     // Start index of this mapping in the "grand" fit
@@ -102,7 +100,7 @@ public:
 
     /// @copydoc PhotometryMappingBase::computeParameterDerivatives
     void computeParameterDerivatives(MeasuredStar const &measuredStar, double instFlux,
-                                     Eigen::VectorXd &derivatives) const override {
+                                     Eigen::Ref<Eigen::VectorXd> derivatives) const override {
         _transfo->computeParameterDerivatives(measuredStar.x, measuredStar.y, instFlux, derivatives);
     }
 
@@ -111,6 +109,20 @@ public:
 
     /// @copydoc PhotometryMappingBase::getParameters
     Eigen::VectorXd getParameters() override { return _transfo->getParameters(); }
+
+    /// @copydoc PhotometryMappingBase::getMappingIndices
+    void getMappingIndices(std::vector<unsigned> &indices) const override {
+        indices.reserve(getNpar());
+        for (unsigned k = 0; k < getNpar(); ++k) {
+            indices[k] = index + k;
+        }
+    }
+
+    /// @copydoc PhotometryMappingBase::dump
+    void dump(std::ostream &stream = std::cout) const override {
+        stream << "index: " << index << " params: ";
+        _transfo->dump(stream);
+    }
 
     std::shared_ptr<PhotometryTransfo> getTransfo() const { return _transfo; }
 
@@ -124,41 +136,58 @@ private:
  */
 class ChipVisitPhotometryMapping : public PhotometryMappingBase {
 public:
-    ChipVisitPhotometryMapping(std::shared_ptr<PhotometryTransfo> chipTransfo,
-                               std::shared_ptr<PhotometryTransfo> visitTransfo)
+    ChipVisitPhotometryMapping(std::shared_ptr<PhotometryMapping> chipMapping,
+                               std::shared_ptr<PhotometryMapping> visitMapping)
             : PhotometryMappingBase(),
-              _chipTransfo(std::move(chipTransfo)),
-              _visitTransfo(std::move(visitTransfo)) {}
+              _chipMapping(std::move(chipMapping)),
+              _visitMapping(std::move(visitMapping)) {}
 
     // std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib() const {
     //     return std::shared_ptr<afw::image::PhotoCalib>(new afw::image::PhotoCalib(0.0));
     // }
 
     /// @copydoc PhotometryMappingBase::getNpar
-    unsigned getNpar() const override { return _chipTransfo->getNpar() + _visitTransfo->getNpar(); }
+    unsigned getNpar() const override { return _chipMapping->getNpar() + _visitMapping->getNpar(); }
 
     /// @copydoc PhotometryMappingBase::transformFlux
     double transformFlux(MeasuredStar const &measuredStar, double instFlux) const override {
-        double tempFlux = _chipTransfo->apply(measuredStar.x, measuredStar.y, instFlux);
-        return _visitTransfo->apply(measuredStar.getXFocal(), measuredStar.getYFocal(), tempFlux);
+        double tempFlux = _chipMapping->getTransfo()->apply(measuredStar.x, measuredStar.y, instFlux);
+        return _visitMapping->getTransfo()->apply(measuredStar.getXFocal(), measuredStar.getYFocal(),
+                                                  tempFlux);
     }
 
     /// @copydoc PhotometryMappingBase::computeParameterDerivatives
     void computeParameterDerivatives(MeasuredStar const &measuredStar, double instFlux,
-                                     Eigen::VectorXd &derivatives) const override {
-        _chipTransfo->computeParameterDerivatives(measuredStar.x, measuredStar.y, instFlux, derivatives);
-    }
+                                     Eigen::Ref<Eigen::VectorXd> derivatives) const override;
 
     /// @copydoc PhotometryMappingBase::offsetParams
-    void offsetParams(Eigen::VectorXd const &delta) override { _chipTransfo->offsetParams(delta); }
+    void offsetParams(Eigen::VectorXd const &delta) override {
+        _chipMapping->offsetParams(delta.segment(0, _chipMapping->getNpar()));
+        _visitMapping->offsetParams(delta.segment(_chipMapping->getNpar(), _visitMapping->getNpar()));
+    }
 
     /// @copydoc PhotometryMappingBase::getParameters
-    Eigen::VectorXd getParameters() override { return _chipTransfo->getParameters(); }
+    Eigen::VectorXd getParameters() override {
+        Eigen::VectorXd joined(getNpar());
+        joined << _chipMapping->getParameters(), _visitMapping->getParameters();
+        return joined;
+    }
+
+    /// @copydoc PhotometryMappingBase::getMappingIndices
+    void getMappingIndices(std::vector<unsigned> &indices) const override;
+
+    /// @copydoc PhotometryMappingBase::dump
+    void dump(std::ostream &stream = std::cout) const override {
+        stream << "index: " << index << " chipMapping: ";
+        _chipMapping->dump(stream);
+        stream << "visitMapping: ";
+        _visitMapping->dump(stream);
+    }
 
 private:
     // the actual transformation to be fit
-    std::shared_ptr<PhotometryTransfo> _chipTransfo;
-    std::shared_ptr<PhotometryTransfo> _visitTransfo;
+    std::shared_ptr<PhotometryMapping> _chipMapping;
+    std::shared_ptr<PhotometryMapping> _visitMapping;
 };
 
 }  // namespace jointcal

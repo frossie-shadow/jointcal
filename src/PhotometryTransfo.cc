@@ -88,7 +88,7 @@ void PhotometryTransfoChebyshev::offsetParams(Eigen::VectorXd const &delta) {
 }
 
 void PhotometryTransfoChebyshev::computeParameterDerivatives(double x, double y, double instFlux,
-                                                             Eigen::VectorXd &derivatives) const {
+                                                             Eigen::Ref<Eigen::VectorXd> derivatives) const {
     // Algorithm: compute all the individual components recursively (since we'll need them anyway),
     // then combine them into the final answer vectors.
     Eigen::VectorXd Tnx(_degree + 1);

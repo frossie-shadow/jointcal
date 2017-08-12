@@ -54,7 +54,6 @@ public:
     /**
      * Get how this set of parameters (of length Npar()) map into the "grand" fit.
      *
-     * @param[in]     ccdImage  The ccdImage to find the mapping of.
      * @param[out]    indices   The indices of the mapping associated with ccdImage.
      */
     virtual void getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) = 0;
@@ -85,6 +84,16 @@ public:
     /// Get the mapping associated with ccdImage.
     PhotometryMappingBase const &getMapping(CcdImage const &ccdImage) const {
         return *(this->findMapping(ccdImage, "getMapping"));
+    }
+
+    /// Dump the contents of the transfos, for debugging.
+    virtual void dump(std::ostream &stream = std::cout) const = 0;
+
+    /// For python print().
+    std::string __str__() const {
+        std::stringstream s;
+        dump(s);
+        return s.str();
     }
 
 protected:

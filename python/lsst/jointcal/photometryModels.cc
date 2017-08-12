@@ -40,6 +40,8 @@ void declarePhotometryModel(py::module &mod) {
     py::class_<PhotometryModel, std::shared_ptr<PhotometryModel>> cls(mod, "PhotometryModel");
 
     cls.def("toPhotoCalib", &PhotometryModel::toPhotoCalib);
+
+    cls.def("__str__", &PhotometryModel::__str__);
 }
 
 void declareSimplePhotometryModel(py::module &mod) {

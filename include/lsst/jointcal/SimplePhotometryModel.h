@@ -51,6 +51,9 @@ public:
      */
     std::shared_ptr<afw::image::PhotoCalib> toPhotoCalib(CcdImage const &ccdImage) const override;
 
+    /// @copydoc PhotometryModel::dump
+    void dump(std::ostream &stream = std::cout) const override;
+
 private:
     typedef std::unordered_map<CcdImageKey, std::unique_ptr<PhotometryMapping>> MapType;
     MapType _myMap;

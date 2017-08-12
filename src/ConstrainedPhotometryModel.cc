@@ -46,8 +46,8 @@ ConstrainedPhotometryModel::ConstrainedPhotometryModel(CcdImageList const &ccdIm
         auto visit = ccdImage->getVisit();
         auto chip = ccdImage->getCcdId();
         _myMap.emplace(ccdImage->getHashKey(),
-                       std::unique_ptr<ChipVisitPhotometryMapping>(new ChipVisitPhotometryMapping(
-                               _chipMap[chip]->getTransfo(), _visitMap[visit]->getTransfo())));
+                       std::unique_ptr<ChipVisitPhotometryMapping>(
+                               new ChipVisitPhotometryMapping(_chipMap[chip], _visitMap[visit])));
     }
     LOGLS_INFO(_log, "Constructor got " << _chipMap.size() << " chip mappings and " << _visitMap.size()
                                         << " visit mappings.");
@@ -56,16 +56,17 @@ ConstrainedPhotometryModel::ConstrainedPhotometryModel(CcdImageList const &ccdIm
 }
 
 unsigned ConstrainedPhotometryModel::assignIndices(std::string const &whatToFit, unsigned firstIndex) {
-    // TODO: currently ignoring whatToFit. Should we even care? Maybe it helps to initialize with fitting just
-    // visits or chips first before fitting both simultaneously?
+    // TODO: currently ignoring whatToFit: eventually implement configurability.
     unsigned index = firstIndex;
-    for (auto &chip : _chipMap) {
-        chip.second->setIndex(index);
-        index += chip.second->getNpar();
+    for (auto &i : _chipMap) {
+        auto mapping = i.second.get();
+        mapping->setIndex(index);
+        index += mapping->getNpar();
     }
-    for (auto &visit : _visitMap) {
-        visit.second->setIndex(index);
-        index += visit.second->getNpar();
+    for (auto &i : _visitMap) {
+        auto mapping = i.second.get();
+        mapping->setIndex(index);
+        index += mapping->getNpar();
     }
     return index;
 }
@@ -89,14 +90,28 @@ double ConstrainedPhotometryModel::transformFlux(CcdImage const &ccdImage, Measu
 
 void ConstrainedPhotometryModel::getMappingIndices(CcdImage const &ccdImage, std::vector<unsigned> &indices) {
     auto mapping = this->findMapping(ccdImage, "getMappingIndices");
-    if (indices.size() < mapping->getNpar()) indices.resize(mapping->getNpar());
-    indices[0] = mapping->getIndex();
+    mapping->getMappingIndices(indices);
     // TODO: I think I need a for loop here, from the above value to that +mapping->getNpar()?
 }
 
 void ConstrainedPhotometryModel::computeParameterDerivatives(MeasuredStar const &measuredStar,
                                                              CcdImage const &ccdImage,
-                                                             Eigen::VectorXd &derivatives) {}
+                                                             Eigen::VectorXd &derivatives) {
+    auto mapping = this->findMapping(ccdImage, "computeParameterDerivatives");
+    mapping->computeParameterDerivatives(measuredStar, measuredStar.getInstFlux(), derivatives);
+}
+
+void ConstrainedPhotometryModel::dump(std::ostream &stream) const {
+    for (auto &i : _chipMap) {
+        i.second->dump(stream);
+        stream << std::endl;
+    }
+    stream << std::endl;
+    for (auto &i : _visitMap) {
+        i.second->dump(stream);
+        stream << std::endl;
+    }
+}
 
 PhotometryMappingBase *ConstrainedPhotometryModel::findMapping(CcdImage const &ccdImage,
                                                                std::string name) const {

@@ -38,6 +38,7 @@ void PhotometryFit::leastSquareDerivativesMeasurement(CcdImage const &ccdImage, 
     unsigned nparFlux = (_fittingFluxes) ? 1 : 0;
     unsigned nparTotal = nparModel + nparFlux;
     std::vector<unsigned> indices(nparModel, -1);
+    if (_fittingModel) _photometryModel->getMappingIndices(ccdImage, indices);
 
     Eigen::VectorXd H(nparTotal);  // derivative matrix
     // current position in the Jacobian
@@ -62,7 +63,6 @@ void PhotometryFit::leastSquareDerivativesMeasurement(CcdImage const &ccdImage, 
         double W = std::pow(inverseSigma, 2);
 
         if (_fittingModel) {
-            _photometryModel->getMappingIndices(ccdImage, indices);
             _photometryModel->computeParameterDerivatives(*measuredStar, ccdImage, H);
             for (unsigned k = 0; k < indices.size(); k++) {
                 unsigned l = indices[k];
@@ -225,26 +225,45 @@ void PhotometryFit::saveResultTuples(std::string const &tupleName) const {
        the ntuple, because thmodel relies on it, then we have to add
        some function to the model that returns this relevant
        coordinate. */
-    tuple << "#xccd: coordinate in CCD" << std::endl
-          << "#yccd: " << std::endl
-          << "#mag: rough mag" << std::endl
-          << "#instFlux : measured instrument flux" << std::endl
-          << "#instFluxError : measured instrument flux error" << std::endl
-          << "#flux : measured flux" << std::endl
-          << "#fluxError : measured flux error" << std::endl
-          << "#transformedFlux:" << std::endl
-          << "#transformedFluxErr:" << std::endl
-          << "#fflux : fitted flux" << std::endl
-          << "#jd: Julian date of the measurement" << std::endl
-          << "#color : " << std::endl
-          << "#fsindex: some unique index of the object" << std::endl
-          << "#ra: pos of fitted star" << std::endl
-          << "#dec: pos of fitted star" << std::endl
-          << "#chi2: contribution to Chi2 (1 dof)" << std::endl
-          << "#nm: number of measurements of this FittedStar" << std::endl
-          << "#chip: chip number" << std::endl
-          << "#visit: visit id" << std::endl
-          << "#end" << std::endl;
+    tuple << "#xccd: coordinate in CCD"
+          << "\t"
+          << "yccd: "
+          << "\t"
+          << "mag: rough mag"
+          << "\t"
+          << "instFlux : measured instrument flux"
+          << "\t"
+          << "instFluxError : measured instrument flux error"
+          << "\t"
+          << "flux : measured flux"
+          << "\t"
+          << "fluxError : measured flux error"
+          << "\t"
+          << "transformedFlux:"
+          << "\t"
+          << "transformedFluxErr:"
+          << "\t"
+          << "fflux : fitted flux"
+          << "\t"
+          << "mjd: Julian date of the measurement"
+          << "\t"
+          << "color : "
+          << "\t"
+          << "fsindex: some unique index of the object"
+          << "\t"
+          << "ra: pos of fitted star"
+          << "\t"
+          << "dec: pos of fitted star"
+          << "\t"
+          << "chi2: contribution to Chi2 (1 dof)"
+          << "\t"
+          << "nm: number of measurements of this FittedStar"
+          << "\t"
+          << "chip: chip number"
+          << "\t"
+          << "visit: visit id"
+          << "\t"
+          << "end" << std::endl;
     const CcdImageList &ccdImageList = _associations->getCcdImageList();
     for (auto const &i : ccdImageList) {
         const CcdImage &ccdImage = *i;
@@ -263,12 +282,12 @@ void PhotometryFit::saveResultTuples(std::string const &tupleName) const {
             auto fs = measuredStar.getFittedStar();
             double residual = flux - fs->getFlux();
             double chi2Val = std::pow(residual / sigma, 2);
-            tuple << measuredStar.x << ' ' << measuredStar.y << ' ' << fs->getMag() << ' '
-                  << measuredStar.getInstFlux() << ' ' << measuredStar.getInstFluxErr() << ' '
-                  << measuredStar.getInstFlux() << ' ' << measuredStar.getFluxErr() << ' ' << flux << ' '
-                  << fluxErr << ' ' << fs->getFlux() << ' ' << jd << ' ' << fs->color << ' '
-                  << fs->getIndexInMatrix() << ' ' << fs->x << ' ' << fs->y << ' ' << chi2Val << ' '
-                  << fs->getMeasurementCount() << ' ' << ccdImage.getCcdId() << ' ' << ccdImage.getVisit()
+            tuple << measuredStar.x << "\t" << measuredStar.y << "\t" << fs->getMag() << "\t"
+                  << measuredStar.getInstFlux() << "\t" << measuredStar.getInstFluxErr() << "\t"
+                  << measuredStar.getFlux() << "\t" << measuredStar.getFluxErr() << "\t" << flux << "\t"
+                  << fluxErr << "\t" << fs->getFlux() << "\t" << jd << "\t" << fs->color << "\t"
+                  << fs->getIndexInMatrix() << "\t" << fs->x << "\t" << fs->y << "\t" << chi2Val << "\t"
+                  << fs->getMeasurementCount() << "\t" << ccdImage.getCcdId() << "\t" << ccdImage.getVisit()
                   << std::endl;
         }  // loop on measurements in image
     }      // loop on images
