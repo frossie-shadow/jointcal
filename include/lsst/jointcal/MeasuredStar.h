@@ -90,7 +90,9 @@ public:
     double getMagWeight() const { return (_instFlux * _instFlux / (_instFluxErr * _instFluxErr)); }
 
     double getXFocal() const { return _xFocal; }
+    void setXFocal(double xFocal) { _xFocal = xFocal; }
     double getYFocal() const { return _yFocal; }
+    void setYFocal(double yFocal) { _yFocal = yFocal; }
 
     std::shared_ptr<const FittedStar> getFittedStar() const { return _fittedStar; };
 

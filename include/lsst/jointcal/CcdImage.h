@@ -5,6 +5,7 @@
 #include <list>
 #include <string>
 
+#include "lsst/afw/cameraGeom/Detector.h"
 #include "lsst/afw/table/Source.h"
 #include "lsst/afw/image/TanWcs.h"
 #include "lsst/afw/image/PhotoCalib.h"
@@ -55,6 +56,7 @@ private:
     double _airMass;  // airmass value.
     double _mjd;      // modified julian date
     std::shared_ptr<afw::image::PhotoCalib> _photoCalib;
+    std::shared_ptr<afw::cameraGeom::Detector> _detector;
     // refraction
     // eta : parallactic angle, z: zenithal angle (X = 1/cos(z))
     double _sineta, _coseta, _tgz;
@@ -71,8 +73,9 @@ private:
 public:
     CcdImage(afw::table::SourceCatalog &record, std::shared_ptr<lsst::afw::image::TanWcs> wcs,
              std::shared_ptr<lsst::afw::image::VisitInfo> visitInfo, afw::geom::Box2I const &bbox,
-             std::string const &filter, std::shared_ptr<afw::image::PhotoCalib> photoCalib, int visit,
-             int ccd, std::string const &fluxField);
+             std::string const &filter, std::shared_ptr<afw::image::PhotoCalib> photoCalib,
+             std::shared_ptr<afw::cameraGeom::Detector> detector, int visit, int ccd,
+             std::string const &fluxField);
 
     /// No move or copy: each CCD image is unique to that ccd+visit, and Associations holds all CcdImages.
     CcdImage(CcdImage const &) = delete;
