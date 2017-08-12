@@ -227,7 +227,8 @@ class JointcalTask(pipeBase.CmdLineTask):
         src = dataRef.get("src", flags=lsst.afw.table.SOURCE_IO_NO_FOOTPRINTS, immediate=True)
         calexp = dataRef.get("calexp", immediate=True)
         visitInfo = calexp.getInfo().getVisitInfo()
-        ccdname = calexp.getDetector().getId()
+        detector = calexp.getDetector()
+        ccdname = detector.getId()
 
         calib = calexp.getCalib()
         tanWcs = calexp.getWcs()
@@ -242,7 +243,7 @@ class JointcalTask(pipeBase.CmdLineTask):
             self.log.warn("no stars selected in ", visit, ccdname)
             return tanWcs
         self.log.info("%d stars selected in visit %d ccd %d", len(goodSrc.sourceCat), visit, ccdname)
-        associations.addImage(goodSrc.sourceCat, tanWcs, visitInfo, bbox, filt, photoCalib,
+        associations.addImage(goodSrc.sourceCat, tanWcs, visitInfo, bbox, filt, photoCalib, detector,
                               visit, ccdname, jointcalControl)
 
         Result = collections.namedtuple('Result_from_build_CcdImage', ('wcs', 'key', 'filter'))
@@ -455,11 +456,27 @@ class JointcalTask(pipeBase.CmdLineTask):
             model = lsst.jointcal.SimplePhotometryModel(associations.getCcdImageList())
 
         fit = lsst.jointcal.PhotometryFit(associations, model)
+        # import os; print(os.getpid()); import ipdb; ipdb.set_trace()
         chi2 = fit.computeChi2()
         self.log.info("Initialized: %s", str(chi2))
+        print(model)
         fit.minimize("Model")
         chi2 = fit.computeChi2()
         self.log.info(str(chi2))
+
+        print('!!!!!!!!!!!!!!!!!!')
+        print(model)
+        fit.saveResultTuples("debug-constrained.csv")
+        print('AGAIN!')
+        print('!!!!!!!!!!!!!!!!!!')
+
+        fit.minimize("Model")
+        chi2 = fit.computeChi2()
+        self.log.info(str(chi2))
+        print(model)
+        fit.saveResultTuples("debug-constrained-2.csv")
+        print('!!!!!!!!!!!!!!!!!!')
+
         fit.minimize("Fluxes")
         chi2 = fit.computeChi2()
         self.log.info(str(chi2))
