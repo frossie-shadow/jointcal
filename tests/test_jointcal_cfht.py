@@ -113,15 +113,12 @@ class JointcalTestCFHT(jointcalTestBase.JointcalTestBase, lsst.utils.tests.TestC
                    'photometryFinalNdof': 1388
                    }
 
-        self.config = lsst.jointcal.jointcal.JointcalConfig()
-        self.config.doAstrometry = False
-        self.jointcalStatistics.do_astrometry = False
-
         self._testJointcalTask(2, None, None, pa1, metrics=metrics)
 
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):
     pass
+
 
 if __name__ == "__main__":
     lsst.utils.tests.init()
