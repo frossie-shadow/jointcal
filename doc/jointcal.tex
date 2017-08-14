@@ -287,7 +287,7 @@ issues associated to fitting of polynomials.
 In the least squares expression \ref{eq:astrometry-chi2}, the residuals
 of the measurement terms read: 
 \[
-R_{\gamma i}=M_{\gamma}(X_{\gamma,i})-P_{\gamma}(F_{j})
+D_{\gamma i}=M_{\gamma}(S_{\gamma,i})-P_{\gamma}(F_{j})
 \]
 If the coordinates $F_{j}$ are sidereal coordinates, the projector
 $P_{\gamma}$ determine the meaning of the mapping $M_{\gamma}$.
@@ -337,7 +337,7 @@ refraction, i.e. the fact that objects positions in the image plane
 are shifted by atmospheric refraction in a way that depends on their
 color. The shift reads: 
 \begin{equation}
-\delta X=k_{b}(c-c_{0})\hat{n}\label{eq:refrac_corr}
+\delta S=k_{b}(c-c_{0})\hat{n}\label{eq:refrac_corr}
 \end{equation}
 where $k_{b}$ is a fit parameter (one per band $b$), $c$ is the
 color of the object in hand, $c_{0}$ is the average color, and $\hat{n}$
@@ -497,7 +497,7 @@ the optics+sky response, where $(u(x,y),v(x,y))$ are the focal plane
 coordinates of pixel $(x,y)$ on a given CCD) per visit. Thus, the
 mapping will be
 \[
-M_{\gamma i}(\eta,f_{\gamma i})=M_{CCD}(f_{0}^{-1},f_{\gamma i})M_{visit}(a_{j,k},x_{\gamma i},y_{\gamma i})=f_{\gamma i}[f_{0}]^{-1}\sum_{j=0}^{j=3}\sum_{k=0}^{k=3}a_{j,k}T_{j,k}(u_{\gamma i},v_{\gamma i})=\phi_{\gamma i}
+M_{\gamma i}(\eta,S_{\gamma i})=M_{CCD}(f_{0}^{-1},f_{\gamma i})M_{visit}(a_{j,k},x_{\gamma i},y_{\gamma i})=f_{\gamma i}[f_{0}]^{-1}\sum_{j=0}^{j=3}\sum_{k=0}^{k=3}a_{j,k}T_{j,k}(u_{\gamma i},v_{\gamma i})=\phi_{\gamma i}
 \]
 where we will fit $f_{0}^{-1}$ instead of $f_{0}$ in order to simplify
 the derivatives (with respect to $\eta=\left(f_{0}^{-1},a_{j,k}\forall j,k\right)$).

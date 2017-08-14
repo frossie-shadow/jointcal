@@ -1024,13 +1024,13 @@ reference "eq:astrometry-chi2"
 , the residuals of the measurement terms read: 
 \begin_inset Formula 
 \[
-R_{\gamma i}=M_{\gamma}(X_{\gamma,i})-P_{\gamma}(F_{j})
+D_{\gamma i}=M_{\gamma}(S_{\gamma i})-P_{\gamma}(F_{i})
 \]
 
 \end_inset
 
 If the coordinates 
-\begin_inset Formula $F_{j}$
+\begin_inset Formula $F_{i}$
 \end_inset
 
  are sidereal coordinates, the projector 
@@ -1293,7 +1293,7 @@ The code allows to account for differential chromatic effects of atmospheric
  The shift reads: 
 \begin_inset Formula 
 \begin{equation}
-\delta X=k_{b}(c-c_{0})\hat{n}\label{eq:refrac_corr}
+\delta S=k_{b}(c-c_{0})\hat{n}\label{eq:refrac_corr}
 \end{equation}
 
 \end_inset
@@ -1955,7 +1955,7 @@ As an illustrative example, we will work through a particular photometry
  Thus, the mapping will be
 \begin_inset Formula 
 \[
-M_{\gamma i}(\eta,f_{\gamma i})=M_{CCD}(f_{0}^{-1},f_{\gamma i})M_{visit}(a_{j,k},x_{\gamma i},y_{\gamma i})=f_{\gamma i}[f_{0}]^{-1}\sum_{j=0}^{j=3}\sum_{k=0}^{k=3}a_{j,k}T_{j,k}(u_{\gamma i},v_{\gamma i})=\phi_{\gamma i}
+M_{\gamma i}(\eta,S_{\gamma i})=M_{CCD}(f_{0}^{-1},f_{\gamma i})M_{visit}(a_{j,k},x_{\gamma i},y_{\gamma i})=f_{\gamma i}[f_{0}]^{-1}\sum_{j=0}^{j=3}\sum_{k=0}^{k=3}a_{j,k}T_{j,k}(u_{\gamma i},v_{\gamma i})=\phi_{\gamma i}
 \]
 
 \end_inset
@@ -3198,7 +3198,6 @@ Run example
 \end_layout
 
 \begin_layout Verbatim
-
         assoc = Associations()
 \end_layout
 
@@ -3207,57 +3206,46 @@ Run example
 \end_layout
 
 \begin_layout Verbatim
-
 # iterate on the input calexps        
 \end_layout
 
 \begin_layout Verbatim
-
         for dataRef in ref :
 \end_layout
 
 \begin_layout Verbatim
-
             src = dataRef.get("src", immediate=True)
 \end_layout
 
 \begin_layout Verbatim
-
             calexp = dataRef.get("calexp", immediate=True)
 \end_layout
 
 \begin_layout Verbatim
-
             tanwcs = afwImage.TanWcs.cast(calexp.getWcs())
 \end_layout
 
 \begin_layout Verbatim
-
             bbox = calexp.getBBox()
 \end_layout
 
 \begin_layout Verbatim
-
             md = dataRef.get("calexp_md", immediate=True)
 \end_layout
 
 \begin_layout Verbatim
-
             calib = afwImage.Calib(md)
 \end_layout
 
 \begin_layout Verbatim
-
             filt = calexp.getFilter().getName()
 \end_layout
 
 \begin_layout Verbatim
-
 # select proper sources            
 \end_layout
 
 \begin_layout Verbatim
-
             newSrc = ss.select(src, calib)
 \end_layout
 
@@ -3266,27 +3254,22 @@ Run example
 \end_layout
 
 \begin_layout Verbatim
-
 # actually load the data            
 \end_layout
 
 \begin_layout Verbatim
-
             assoc.AddImage(newSrc, tanwcs, md, bbox, filt, calib,
 \end_layout
 
 \begin_layout Verbatim
-
                            dataRef.dataId['visit'], dataRef.dataId['ccd'],
 \end_layout
 
 \begin_layout Verbatim
-
                            dataRef.getButler().mapper.getCameraName(), 
 \end_layout
 
 \begin_layout Verbatim
-
                            astromControl)
 \end_layout
 
@@ -3295,113 +3278,91 @@ Run example
 \end_layout
 
 \begin_layout Verbatim
-
 # carry out the association        
 \end_layout
 
 \begin_layout Verbatim
-
         matchCut = 3.0
 \end_layout
 
 \begin_layout Verbatim
-
         assoc.AssociateCatalogs(matchCut)
 \end_layout
 
 \begin_layout Verbatim
-
 # collect reference objects
 \end_layout
 
 \begin_layout Verbatim
-
         assoc.CollectRefStars(False) # do not project RefStars
 \end_layout
 
 \begin_layout Verbatim
-
 # select objects measured at least twice.
 \end_layout
 
 \begin_layout Verbatim
-
         assoc.SelectFittedStars()
 \end_layout
 
 \begin_layout Verbatim
-
 # Send back fitted stars on the sky.
 \end_layout
 
 \begin_layout Verbatim
-
         assoc.DeprojectFittedStars() # required for AstrometryFit
 \end_layout
 
 \begin_layout Verbatim
-
 # Chose a ProjectionHandler
 \end_layout
 
 \begin_layout Verbatim
-
         sky2TP = OneTPPerShoot(assoc.TheCcdImageList())
 \end_layout
 
 \begin_layout Verbatim
-
 # chose a distortion model
 \end_layout
 
 \begin_layout Verbatim
-
         spm = SimplePolyModel(assoc.TheCcdImageList(), sky2TP, True, 0)
 \end_layout
 
 \begin_layout Verbatim
-
 # Assemble the whole thing
 \end_layout
 
 \begin_layout Verbatim
-
         fit = AstrometryFit(assoc,spm)
 \end_layout
 
 \begin_layout Verbatim
-
 # we are ready to run.
  Initialize parameters by running "partial fits"
 \end_layout
 
 \begin_layout Verbatim
-
         fit.Minimize("Distortions")
 \end_layout
 
 \begin_layout Verbatim
-
         fit.Minimize("Positions")
 \end_layout
 
 \begin_layout Verbatim
-
 # now fit both sets simultaneously.
 \end_layout
 
 \begin_layout Verbatim
-
         fit.Minimize("Distortions Positions")
 \end_layout
 
 \begin_layout Verbatim
-
 # output residual tuples
 \end_layout
 
 \begin_layout Verbatim
-
         fit.MakeResTuple("res.list")
 \end_layout
 
