@@ -42,7 +42,13 @@ void declarePhotometryMappingBase(py::module &mod) {
 
     cls.def("getNpar", &PhotometryMappingBase::getNpar);
     cls.def("transformFlux", &PhotometryMappingBase::transformFlux);
-    cls.def("computeParameterDerivatives", &PhotometryMappingBase::computeParameterDerivatives);
+    cls.def("computeParameterDerivatives",
+            [](PhotometryMappingBase const &self, MeasuredStar const &star, double instFlux) {
+                Eigen::VectorXd derivatives(self.getNpar());
+                self.computeParameterDerivatives(star, instFlux, derivatives);
+                return derivatives;
+            });
+
     cls.def("offsetParams", &PhotometryMappingBase::offsetParams);
     cls.def("getParameters", &PhotometryMappingBase::getParameters);
     cls.def("getMappingIndices", &PhotometryMappingBase::getMappingIndices);
@@ -55,6 +61,8 @@ void declarePhotometryMapping(py::module &mod) {
     py::class_<PhotometryMapping, std::shared_ptr<PhotometryMapping>, PhotometryMappingBase> cls(
             mod, "PhotometryMapping");
     cls.def(py::init<std::shared_ptr<PhotometryTransfo>>(), "transfo"_a);
+
+    cls.def("getTransfo", &PhotometryMapping::getTransfo);
 }
 
 void declareChipVisitPhotometryMapping(py::module &mod) {
@@ -75,10 +83,10 @@ void declareChipVisitPhotometryMapping(py::module &mod) {
     //                           py::return_value_policy::reference_internal);
 }
 
-PYBIND11_PLUGIN(PhotometryMappings) {
+PYBIND11_PLUGIN(photometryMappings) {
     py::module::import("lsst.jointcal.star");
     py::module::import("lsst.jointcal.photometryTransfo");
-    py::module mod("PhotometryMappings");
+    py::module mod("photometryMappings");
 
     if (_import_array() < 0) {
         PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
@@ -86,8 +94,8 @@ PYBIND11_PLUGIN(PhotometryMappings) {
     }
 
     declarePhotometryMappingBase(mod);
-    declareChipVisitPhotometryMapping(mod);
     declarePhotometryMapping(mod);
+    declareChipVisitPhotometryMapping(mod);
 
     return mod.ptr();
 }

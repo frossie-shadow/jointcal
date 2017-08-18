@@ -42,6 +42,7 @@ void declarePhotometryTransfo(py::module &mod) {
             "x"_a, "y"_a, "instFlux"_a);
     cls.def("offsetParams", &PhotometryTransfo::offsetParams);
     cls.def("getNpar", &PhotometryTransfo::getNpar);
+    cls.def("getParameters", &PhotometryTransfo::getParameters);
     cls.def("computeParameterDerivatives",
             [](PhotometryTransfo const &self, double x, double y, double instFlux) {
                 Eigen::VectorXd derivatives(self.getNpar());

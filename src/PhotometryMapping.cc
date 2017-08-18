@@ -27,11 +27,13 @@ void ChipVisitPhotometryMapping::computeParameterDerivatives(MeasuredStar const 
     Eigen::Ref<Eigen::VectorXd> visitBlock =
             derivatives.segment(_chipMapping->getNpar(), _visitMapping->getNpar());
 
+    std::cout << "focal: " << measuredStar.getXFocal() << " " << measuredStar.getYFocal() << std::endl;
+
     _chipMapping->getTransfo()->computeParameterDerivatives(measuredStar.x, measuredStar.y, instFlux,
                                                             chipBlock);
     chipBlock *= visitScale;
-    _visitMapping->getTransfo()->computeParameterDerivatives(measuredStar.x, measuredStar.y, instFlux,
-                                                             visitBlock);
+    _visitMapping->getTransfo()->computeParameterDerivatives(measuredStar.getXFocal(),
+                                                             measuredStar.getYFocal(), instFlux, visitBlock);
     visitBlock *= chipScale;
 }
 
