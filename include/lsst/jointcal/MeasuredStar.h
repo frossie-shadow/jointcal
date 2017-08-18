@@ -73,7 +73,8 @@ public:
 
     void dump(std::ostream &stream = std::cout) const {
         BaseStar::dump(stream);
-        stream << " id: " << _id << " valid: " << _valid;
+        stream << " instFlux: " << _instFlux << " instFluxErr: " << _instFluxErr << " id: " << _id
+               << " valid: " << _valid;
     }
 
     void setInstFlux(double instFlux) { _instFlux = instFlux; }
