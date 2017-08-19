@@ -11,6 +11,7 @@ from astropy import units as u
 
 import lsst.afw.coord
 import lsst.afw.geom
+import lsst.afw.image.utils
 import lsst.utils
 import lsst.pex.exceptions
 
@@ -26,6 +27,9 @@ class JointcalTestDECAM(jointcalTestBase.JointcalTestBase, lsst.utils.tests.Test
 
     @classmethod
     def setUpClass(cls):
+        # Clear the internal filter list to allow these instrument
+        # filters to be initialized.
+        lsst.afw.image.utils.resetFilters()
         try:
             cls.data_dir = lsst.utils.getPackageDir('testdata_jointcal')
             os.environ['ASTROMETRY_NET_DATA_DIR'] = os.path.join(cls.data_dir, 'decam_and_index')
